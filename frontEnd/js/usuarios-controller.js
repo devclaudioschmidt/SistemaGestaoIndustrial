@@ -187,7 +187,7 @@ const UsuariosController = {
   verificarAutenticacao() {
     auth.onAuthStateChanged(async (user) => {
       if (!user) {
-        window.location.href = "/index.html";
+        window.location.href = "../index.html";
         return;
       }
 
@@ -195,14 +195,14 @@ const UsuariosController = {
         const perfil = await AuthService.getPerfilUsuario(user.uid);
 
         if (!perfil || perfil.cargo !== "master") {
-          window.location.href = "/pages/dashboard.html";
+          window.location.href = "dashboard.html";
           return;
         }
 
         this.elements.userInfo.textContent = `${perfil.email} | Master`;
         this.carregarUsuarios();
       } catch (error) {
-        window.location.href = "/index.html";
+        window.location.href = "../index.html";
       }
     });
   },
@@ -664,9 +664,9 @@ const UsuariosController = {
   async handleLogout() {
     try {
       await AuthService.logout();
-      window.location.href = "/index.html";
+      window.location.href = "../index.html";
     } catch (error) {
-      window.location.href = "/index.html";
+      window.location.href = "../index.html";
     }
   },
 };

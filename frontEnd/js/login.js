@@ -291,9 +291,9 @@ const LoginController = {
    */
   redirecionarPorCargo(perfil) {
     if (perfil.cargo === "master") {
-      window.location.href = "/pages/usuarios.html";
+      window.location.href = "pages/usuarios.html";
     } else {
-      window.location.href = "/pages/dashboard.html";
+      window.location.href = "pages/dashboard.html";
     }
   },
 

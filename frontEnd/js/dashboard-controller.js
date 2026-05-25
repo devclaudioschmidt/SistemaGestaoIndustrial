@@ -51,7 +51,7 @@ const DashboardController = {
   async carregarPerfil() {
     auth.onAuthStateChanged(async (user) => {
       if (!user) {
-        window.location.href = "/index.html";
+        window.location.href = "../index.html";
         return;
       }
 
@@ -60,13 +60,13 @@ const DashboardController = {
 
         if (!perfil || !perfil.ativo) {
           await AuthService.logout();
-          window.location.href = "/index.html";
+          window.location.href = "../index.html";
           return;
         }
 
         this.exibirPerfil(perfil);
       } catch (error) {
-        window.location.href = "/index.html";
+        window.location.href = "../index.html";
       }
     });
   },
@@ -121,9 +121,9 @@ const DashboardController = {
   async handleLogout() {
     try {
       await AuthService.logout();
-      window.location.href = "/index.html";
+      window.location.href = "../index.html";
     } catch (error) {
-      window.location.href = "/index.html";
+      window.location.href = "../index.html";
     }
   },
 };
