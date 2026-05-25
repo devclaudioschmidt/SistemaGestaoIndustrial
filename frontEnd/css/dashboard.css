@@ -1,0 +1,171 @@
+/**
+ * dashboard.css
+ * ===========================================================================
+ * Estilos da tela de dashboard pós-login.
+ * Layout clean com topbar fixa e card de boas-vindas.
+ *
+ * Depende de: global.css (variáveis CSS e utilitários)
+ * ===========================================================================
+ */
+
+/* ==========================================================================
+   TOPBAR
+   ========================================================================== */
+.dashboard-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 24px;
+  background: var(--surface-color);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-logo {
+  height: 32px;
+  width: auto;
+}
+
+.topbar-app-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  display: none;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.topbar-user-info {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: none;
+  text-align: right;
+}
+
+.btn-logout {
+  padding: 6px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-round);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main);
+  background: var(--surface-color);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-logout:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* ==========================================================================
+   CONTEÚDO PRINCIPAL
+   ========================================================================== */
+.dashboard-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ==========================================================================
+   CARD DE BOAS-VINDAS
+   ========================================================================== */
+.dashboard-welcome {
+  width: 100%;
+}
+
+.welcome-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+}
+
+.welcome-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: var(--text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.welcome-text {
+  flex: 1;
+}
+
+.welcome-name {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.welcome-role {
+  font-size: 1rem;
+}
+
+/* ==========================================================================
+   PLACEHOLDER DE CONTEÚDO
+   ========================================================================== */
+.dashboard-content {
+  width: 100%;
+}
+
+.dashboard-placeholder {
+  text-align: center;
+  padding: 48px 24px;
+  line-height: 1.8;
+}
+
+/* ==========================================================================
+   RODAPÉ
+   ========================================================================== */
+.dashboard-footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 0.75rem;
+}
+
+/* ==========================================================================
+   BREAKPOINT TABLET / DESKTOP
+   ========================================================================== */
+@media (min-width: 600px) {
+  .topbar-app-name {
+    display: inline;
+  }
+
+  .topbar-user-info {
+    display: inline;
+  }
+
+  .dashboard-main {
+    padding: 48px 24px;
+  }
+
+  .welcome-name {
+    font-size: 1.75rem;
+  }
+}

@@ -1,70 +1,98 @@
 /**
  * login.js
  * =============================================================================
- * Controlador da tela de login.
- * Gerencia validação de formulário, estados de loading e simulação de
- * autenticação. A lógica de negócio (simulateAuthentication) é isolada
- * da manipulação de DOM para facilitar testes futuros.
+ * Controlador da tela de login com autenticação real via Firebase Auth.
+ * Gerencia toggle entre formulário de login e recuperação de senha,
+ * validação de formulário, estados de loading e redirecionamento
+ * baseado no cargo do usuário (master → usuarios.html, demais → dashboard.html).
  *
- * Dependências: ui-controller.js (deve ser carregado antes).
+ * Dependências: ui-controller.js, firebase-core.js, auth-service.js
  * Uso: Exclusivo da página index.html.
  * =============================================================================
  */
+console.log("[login.js] Script carregado");
+
 const LoginController = {
-  /** @type {Object} Referências aos elementos do DOM */
   elements: {},
+  loginFormHtml: "",
 
   /**
-   * Inicializa o controlador: cache de elementos e registro de eventos.
+   * Inicializa o controller: cacheia elementos do DOM e vincula eventos.
+   * Usa delegação de eventos no card para suportar toggle entre formulários.
    */
   init() {
+    console.log("[login.js] init() chamado");
     this.cacheElements();
     this.bindEvents();
+    console.log("[login.js] Eventos vinculados via delegação");
   },
 
   /**
-   * Armazena referências aos elementos do DOM para evitar
-   * consultas repetidas ao documento.
+   * Cacheia referências do card de login e do alerta.
+   * Armazena o HTML original do formulário de login para restauração futura.
    */
   cacheElements() {
     this.elements = {
-      form: document.getElementById('login-form'),
-      emailInput: document.getElementById('login-email'),
-      passwordInput: document.getElementById('login-password'),
-      submitButton: document.getElementById('login-submit'),
-      emailError: document.getElementById('email-error'),
-      passwordError: document.getElementById('password-error'),
-      alertMessage: document.getElementById('login-alert'),
-      rememberCheckbox: document.getElementById('remember-me'),
+      card: document.querySelector(".login-card"),
+      alertMessage: document.getElementById("login-alert"),
     };
+
+    const loginForm = document.getElementById("login-form");
+    if (loginForm) {
+      this.loginFormHtml = loginForm.outerHTML;
+    }
   },
 
   /**
-   * Registra os listeners de eventos do formulário.
-   * Submit: validação + autenticação.
-   * Input: limpa erro do campo ao digitar.
+   * Vincula eventos usando delegação no .login-card para suportar
+   * a troca dinâmica entre formulário de login e formulário de reset.
+   * Captura: submit (login e reset), click (links), input (limpar erros).
    */
   bindEvents() {
-    this.elements.form.addEventListener('submit', (event) =>
-      this.handleSubmit(event)
-    );
+    this.elements.card.addEventListener("submit", (event) => {
+      const form = event.target.closest("#login-form");
+      if (form) {
+        this.handleSubmit(event, form);
+        return;
+      }
+      const resetForm = event.target.closest("#reset-form");
+      if (resetForm) {
+        this.handleResetSenha(event, resetForm);
+        return;
+      }
+    });
 
-    this.elements.emailInput.addEventListener('input', () =>
-      this.clearFieldError(this.elements.emailInput, this.elements.emailError)
-    );
+    this.elements.card.addEventListener("click", (event) => {
+      const forgotLink = event.target.closest(".forgot-link");
+      if (forgotLink) {
+        event.preventDefault();
+        this.mostrarFormularioReset();
+        return;
+      }
+      const backLink = event.target.closest(".back-to-login");
+      if (backLink) {
+        event.preventDefault();
+        this.mostrarFormularioLogin();
+        return;
+      }
+    });
 
-    this.elements.passwordInput.addEventListener('input', () =>
-      this.clearFieldError(
-        this.elements.passwordInput,
-        this.elements.passwordError
-      )
-    );
+    this.elements.card.addEventListener("input", (event) => {
+      const input = event.target.closest(".input-field");
+      if (!input) return;
+      const errorElement = input
+        .closest(".input-group")
+        .querySelector(".field-error");
+      if (errorElement) {
+        this.clearFieldError(input, errorElement);
+      }
+    });
   },
 
   /**
-   * Valida o formato do e-mail informado.
+   * Valida o formato do e-mail usando regex simples.
    * @param {string} email
-   * @returns {boolean} True se o e-mail tiver formato válido.
+   * @returns {boolean}
    */
   isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -72,40 +100,40 @@ const LoginController = {
   },
 
   /**
-   * Valida se a senha atende aos requisitos mínimos.
+   * Valida se a senha atende ao comprimento mínimo (6 caracteres).
    * @param {string} password
-   * @returns {boolean} True se a senha tiver 6+ caracteres.
+   * @returns {boolean}
    */
   isValidPassword(password) {
     return password.length >= 6;
   },
 
   /**
-   * Exibe erro visual em um campo específico.
-   * @param {HTMLElement} input - Campo com erro.
-   * @param {HTMLElement} errorElement - Elemento de mensagem de erro.
-   * @param {string} message - Texto do erro.
+   * Exibe mensagem de erro visual em um campo específico.
+   * @param {HTMLElement} input
+   * @param {HTMLElement} errorElement
+   * @param {string} message
    */
   showFieldError(input, errorElement, message) {
-    input.classList.add('is-error');
+    input.classList.add("is-error");
     errorElement.textContent = message;
-    errorElement.classList.add('is-visible');
+    errorElement.classList.add("is-visible");
   },
 
   /**
-   * Remove o estado de erro de um campo.
-   * @param {HTMLElement} input - Campo a limpar.
-   * @param {HTMLElement} errorElement - Elemento de erro a ocultar.
+   * Remove o estado de erro de um campo específico.
+   * @param {HTMLElement} input
+   * @param {HTMLElement} errorElement
    */
   clearFieldError(input, errorElement) {
-    input.classList.remove('is-error');
-    errorElement.classList.remove('is-visible');
+    input.classList.remove("is-error");
+    errorElement.classList.remove("is-visible");
   },
 
   /**
-   * Exibe mensagem de alerta no topo do formulário.
-   * @param {string} message - Texto do alerta.
-   * @param {'is-error' | 'is-success'} type - Tipo visual do alerta.
+   * Exibe uma mensagem de alerta (erro ou sucesso) no topo do card de login.
+   * @param {string} message
+   * @param {string} type - Classe CSS: "is-error" | "is-success"
    */
   showAlert(message, type) {
     const alert = this.elements.alertMessage;
@@ -113,63 +141,65 @@ const LoginController = {
     alert.className = `alert-message ${type} is-visible`;
   },
 
-  /** Oculta a mensagem de alerta. */
+  /** Oculta a mensagem de alerta resetando suas classes. */
   hideAlert() {
-    this.elements.alertMessage.className = 'alert-message';
+    this.elements.alertMessage.className = "alert-message";
   },
 
   /**
-   * Controla o estado de loading do botão de submit.
-   * @param {boolean} loading - True ativa o spinner e desabilita o botão.
+   * Controla o estado de loading de um botão.
+   * Quando loading, mostra o spinner e desabilita o botão
+   * para prevenir cliques duplicados (conforme diretriz Anti-Loop).
+   * @param {boolean} loading
+   * @param {HTMLElement} button
    */
-  setLoadingState(loading) {
-    const button = this.elements.submitButton;
+  setLoadingState(loading, button) {
+    if (!button) return;
     if (loading) {
-      button.classList.add('is-loading');
+      button.classList.add("is-loading");
       button.disabled = true;
     } else {
-      button.classList.remove('is-loading');
+      button.classList.remove("is-loading");
       button.disabled = false;
     }
   },
 
   /**
-   * Valida todos os campos do formulário antes do envio.
-   * @returns {boolean} True se todos os campos forem válidos.
+   * Valida os campos do formulário de login.
+   * @returns {boolean}
    */
   validateForm() {
     let isValid = true;
-    const email = this.elements.emailInput.value.trim();
-    const password = this.elements.passwordInput.value;
+    const form = this.elements.card.querySelector("#login-form");
+    if (!form) return false;
+
+    const emailInput = form.querySelector("#login-email");
+    const passwordInput = form.querySelector("#login-password");
+    const emailError = form.querySelector("#email-error");
+    const passwordError = form.querySelector("#password-error");
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
 
     if (!email) {
-      this.showFieldError(
-        this.elements.emailInput,
-        this.elements.emailError,
-        'O e-mail é obrigatório.'
-      );
+      this.showFieldError(emailInput, emailError, "O e-mail é obrigatório.");
       isValid = false;
     } else if (!this.isValidEmail(email)) {
-      this.showFieldError(
-        this.elements.emailInput,
-        this.elements.emailError,
-        'Informe um e-mail válido.'
-      );
+      this.showFieldError(emailInput, emailError, "Informe um e-mail válido.");
       isValid = false;
     }
 
     if (!password) {
       this.showFieldError(
-        this.elements.passwordInput,
-        this.elements.passwordError,
-        'A senha é obrigatória.'
+        passwordInput,
+        passwordError,
+        "A senha é obrigatória."
       );
       isValid = false;
     } else if (!this.isValidPassword(password)) {
       this.showFieldError(
-        this.elements.passwordInput,
-        this.elements.passwordError,
-        'A senha deve ter no mínimo 6 caracteres.'
+        passwordInput,
+        passwordError,
+        "A senha deve ter no mínimo 6 caracteres."
       );
       isValid = false;
     }
@@ -178,71 +208,235 @@ const LoginController = {
   },
 
   /**
-   * Simula chamada de autenticação ao backend.
-   * Função pura e isolada do DOM para facilitar testes unitários.
-   * Credenciais de teste: admin@auxtrat.com / 123456
-   * @param {string} email
-   * @param {string} password
-   * @param {boolean} remember
-   * @returns {Promise<{success: boolean, message: string}>}
+   * Substitui o formulário de login pelo formulário de recuperação de senha.
+   * Preserva o header do card (logo + título) e o rodapé.
    */
-  simulateAuthentication(email, password, remember) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (email === 'admin@auxtrat.com' && password === '123456') {
-          resolve({
-            success: true,
-            message: 'Login realizado com sucesso! Redirecionando...',
-          });
-        } else {
-          resolve({
-            success: false,
-            message: 'E-mail ou senha inválidos. Tente novamente.',
-          });
-        }
-      }, 1500);
-    });
+  mostrarFormularioReset() {
+    this.hideAlert();
+
+    const header = this.elements.card.querySelector(".login-header");
+    const footer = this.elements.card.querySelector(".login-footer");
+    const alertEl = this.elements.alertMessage;
+
+    this.elements.card.innerHTML = `
+      ${header.outerHTML}
+      ${alertEl.outerHTML}
+      <form id="reset-form" class="reset-form" novalidate>
+        <div class="input-group">
+          <label for="reset-email" class="input-label">E-mail</label>
+          <div class="input-wrapper">
+            <input
+              type="email"
+              id="reset-email"
+              class="input-field"
+              placeholder="seu@email.com"
+              inputmode="email"
+              required
+            />
+          </div>
+          <span id="reset-email-error" class="field-error" role="alert"></span>
+        </div>
+
+        <p class="reset-description">
+          Um link de recuperação será enviado para o e-mail informado.
+        </p>
+
+        <button type="submit" id="reset-submit" class="btn-primary">
+          <span class="spinner"></span>
+          <span class="btn-text">Enviar link de recuperação</span>
+        </button>
+
+        <div class="reset-back">
+          <a href="#" class="back-to-login">&larr; Voltar ao login</a>
+        </div>
+      </form>
+      ${footer.outerHTML}
+    `;
+
+    this.elements.alertMessage = document.getElementById("login-alert");
+
+    const emailField = document.getElementById("reset-email");
+    if (emailField) {
+      setTimeout(() => emailField.focus(), 100);
+    }
   },
 
   /**
-   * Manipulador do evento submit do formulário.
-   * Valida os campos, exibe loading, executa autenticação simulada
-   * e redireciona ou exibe erro conforme o resultado.
-   * @param {Event} event - Evento de submit.
+   * Restaura o formulário de login original a partir do HTML armazenado.
    */
-  async handleSubmit(event) {
+  mostrarFormularioLogin() {
+    this.hideAlert();
+    const header = this.elements.card.querySelector(".login-header");
+    const footer = this.elements.card.querySelector(".login-footer");
+    const alertEl = this.elements.alertMessage;
+
+    this.elements.card.innerHTML = `
+      ${header.outerHTML}
+      ${alertEl.outerHTML}
+      ${this.loginFormHtml}
+      ${footer.outerHTML}
+    `;
+
+    this.elements.alertMessage = document.getElementById("login-alert");
+
+    const emailField = document.getElementById("login-email");
+    if (emailField) {
+      setTimeout(() => emailField.focus(), 100);
+    }
+  },
+
+  /**
+   * Redireciona o usuário com base no cargo após login bem-sucedido.
+   * @param {Object} perfil
+   */
+  redirecionarPorCargo(perfil) {
+    if (perfil.cargo === "master") {
+      window.location.href = "/usuarios.html";
+    } else {
+      window.location.href = "/dashboard.html";
+    }
+  },
+
+  /**
+   * Manipulador do evento submit do formulário de login.
+   * @param {Event} event
+   * @param {HTMLFormElement} form
+   */
+  async handleSubmit(event, form) {
     event.preventDefault();
     this.hideAlert();
 
     if (!this.validateForm()) return;
 
-    const email = this.elements.emailInput.value.trim();
-    const password = this.elements.passwordInput.value;
-    const remember = this.elements.rememberCheckbox.checked;
+    const emailInput = form.querySelector("#login-email");
+    const passwordInput = form.querySelector("#login-password");
+    const submitButton = form.querySelector("#login-submit");
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
 
-    this.setLoadingState(true);
+    this.setLoadingState(true, submitButton);
 
     try {
-      const result = await this.simulateAuthentication(email, password, remember);
+      const dadosUsuario = await AuthService.login(email, password);
 
-      if (result.success) {
-        this.showAlert(result.message, 'is-success');
-        this.elements.emailInput.classList.add('is-success');
+      let perfil = await AuthService.getPerfilUsuario(dadosUsuario.uid);
 
-        setTimeout(() => {
-          window.location.href = '/dashboard.html';
-        }, 1000);
-      } else {
-        this.showAlert(result.message, 'is-error');
-        this.elements.passwordInput.value = '';
-        this.elements.passwordInput.focus();
+      if (!perfil) {
+        if (email === AuthService.MASTER_EMAIL) {
+          perfil = await AuthService.garantirPerfilMaster(
+            dadosUsuario.uid,
+            email
+          );
+        } else {
+          this.showAlert(
+            "Usuário não encontrado. Contate o administrador.",
+            "is-error"
+          );
+          passwordInput.value = "";
+          this.setLoadingState(false, submitButton);
+          return;
+        }
       }
+
+      if (!perfil.ativo) {
+        this.showAlert(
+          "Esta conta foi desativada. Contate o administrador.",
+          "is-error"
+        );
+        await AuthService.logout();
+        passwordInput.value = "";
+        this.setLoadingState(false, submitButton);
+        return;
+      }
+
+      await AuthService.registrarAcesso(dadosUsuario.uid);
+
+      this.showAlert(
+        "Login realizado com sucesso! Redirecionando...",
+        "is-success"
+      );
+      emailInput.classList.add("is-success");
+
+      setTimeout(() => {
+        this.redirecionarPorCargo(perfil);
+      }, 1000);
     } catch (error) {
-      this.showAlert('Erro inesperado. Tente novamente mais tarde.', 'is-error');
+      console.error("Erro de autenticação:", error);
+      const mensagem = AuthService.traduzirErroFirebase(
+        error.code || error.message
+      );
+      this.showAlert(mensagem, "is-error");
+      passwordInput.value = "";
+      passwordInput.focus();
     } finally {
-      this.setLoadingState(false);
+      this.setLoadingState(false, submitButton);
     }
+  },
+
+  /**
+   * Manipulador do evento submit do formulário de recuperação de senha.
+   * Valida o e-mail, chama AuthService.esqueceuSenha() e exibe feedback.
+   * Em caso de sucesso, substitui o formulário por uma mensagem de confirmação.
+   * @param {Event} event
+   * @param {HTMLFormElement} form
+   */
+  async handleResetSenha(event, form) {
+    event.preventDefault();
+    this.hideAlert();
+
+    const emailInput = form.querySelector("#reset-email");
+    const emailError = form.querySelector("#reset-email-error");
+    const submitButton = form.querySelector("#reset-submit");
+    const email = emailInput.value.trim();
+
+    if (!email) {
+      this.showFieldError(emailInput, emailError, "Informe seu e-mail.");
+      return;
+    }
+    if (!this.isValidEmail(email)) {
+      this.showFieldError(emailInput, emailError, "Informe um e-mail válido.");
+      return;
+    }
+
+    this.setLoadingState(true, submitButton);
+
+    try {
+      await AuthService.esqueceuSenha(email);
+
+      form.innerHTML = `
+        <div class="reset-success">
+          <p class="reset-success-text">
+            Link de recuperação enviado para <strong>${this.escapeHtml(email)}</strong>.
+          </p>
+          <p class="reset-success-hint text-muted">
+            Verifique sua caixa de entrada e spam. O link expira em 1 hora.
+          </p>
+        </div>
+        <button type="button" class="btn-primary back-to-login-btn" onclick="LoginController.mostrarFormularioLogin()">
+          Voltar ao login
+        </button>
+      `;
+    } catch (error) {
+      console.error("Erro ao enviar reset:", error);
+      const mensagem = AuthService.traduzirErroFirebase(
+        error.code || error.message
+      );
+      this.showAlert(mensagem, "is-error");
+    } finally {
+      this.setLoadingState(false, submitButton);
+    }
+  },
+
+  /**
+   * Escapa caracteres HTML para prevenir XSS.
+   * @param {string} texto
+   * @returns {string}
+   */
+  escapeHtml(texto) {
+    const div = document.createElement("div");
+    div.textContent = texto;
+    return div.innerHTML;
   },
 };
 
-document.addEventListener('DOMContentLoaded', () => LoginController.init());
+document.addEventListener("DOMContentLoaded", () => LoginController.init());

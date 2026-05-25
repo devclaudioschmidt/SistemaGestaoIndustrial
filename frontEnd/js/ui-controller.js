@@ -11,7 +11,7 @@
  */
 const UiController = {
   /**
-   * Inicializa todos os listeners globais.
+   * Inicializa todos os listeners globais da interface.
    * Deve ser chamado após o carregamento do DOM.
    */
   init() {
@@ -20,9 +20,10 @@ const UiController = {
   },
 
   /**
-   * Configura toggle de visibilidade dos campos de senha.
+   * Configura toggle de visibilidade dos campos de senha em toda a aplicação.
    * Usa delegação de eventos no document para capturar cliques
-   * em botões com a classe .toggle-password.
+   * em botões com a classe .toggle-password, evitando listeners duplicados
+   * em páginas com múltiplos campos de senha (login, modal de usuarios).
    */
   setupPasswordToggles() {
     document.addEventListener('click', (event) => {
@@ -48,7 +49,8 @@ const UiController = {
   /**
    * Adiciona efeito ripple (onda) ao clicar em botões primários.
    * Cria um elemento circular animado que se expande a partir do
-   * ponto de clique e desaparece.
+   * ponto de clique e desaparece após a animação.
+   * O estilo @keyframes é injetado dinamicamente no <head>.
    */
   setupRippleEffect() {
     document.addEventListener('mousedown', (event) => {

@@ -190,8 +190,58 @@
 }
 
 /* ==========================================================================
-   RODAPÉ DO CARD
-   ========================================================================== */
+    FORMULÁRIO DE RECUPERAÇÃO DE SENHA
+    ========================================================================== */
+.reset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.reset-description {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.reset-back {
+  text-align: center;
+}
+
+.back-to-login {
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.back-to-login:hover {
+  color: var(--primary-hover);
+}
+
+/* Estado de sucesso após envio do link */
+.reset-success {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.reset-success-text {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.reset-success-hint {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.back-to-login-btn {
+  margin-top: 8px;
+}
+
+/* ==========================================================================
+    RODAPÉ DO CARD
+    ========================================================================== */
 .login-footer {
   text-align: center;
   margin-top: 24px;

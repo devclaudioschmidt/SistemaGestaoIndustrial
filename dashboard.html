@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<!--
+  dashboard.html
+  =============================================================================
+  Dashboard principal pós-login do Sistema de Gestão Industrial - Auxtrat.
+  Exibe boas-vindas ao usuário autenticado com nome e cargo.
+  Acesso liberado para todos os cargos (exceto master, redirecionado para usuarios.html).
+  Depende de: global.css, dashboard.css, ui-controller.js, dashboard-controller.js
+  =============================================================================
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Dashboard - Sistema de Gestão Industrial Auxtrat" />
+  <meta name="theme-color" content="#1a73e8" />
+  <title>Dashboard - Auxtrat Gestão Industrial</title>
+
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="frontEnd/css/global.css" />
+  <link rel="stylesheet" href="frontEnd/css/dashboard.css" />
+</head>
+<body>
+
+  <!-- TOPBAR FIXA -->
+  <header class="dashboard-topbar">
+    <div class="topbar-left">
+      <img src="frontEnd/img/logoAuxtrat-card.png" alt="Auxtrat" class="topbar-logo" />
+      <span class="topbar-app-name">Sistema de Gestão Industrial</span>
+    </div>
+    <div class="topbar-right">
+      <span id="dashboard-user-info" class="topbar-user-info"></span>
+      <button id="dashboard-logout" class="btn-logout">Sair</button>
+    </div>
+  </header>
+  <!-- /topbar -->
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="dashboard-main">
+
+    <!-- Card de boas-vindas com avatar e informações do usuário -->
+    <section class="dashboard-welcome">
+      <div class="welcome-card card-google">
+        <div class="welcome-avatar" id="welcome-avatar">M</div>
+        <div class="welcome-text">
+          <h1 id="welcome-name" class="welcome-name">Carregando...</h1>
+          <p id="welcome-role" class="welcome-role text-muted">Carregando...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Placeholder para módulos futuros -->
+    <section class="dashboard-content">
+      <div class="card-google dashboard-placeholder">
+        <p class="text-muted">
+          Seu painel de trabalho será exibido aqui em breve.<br />
+          Módulos em desenvolvimento: Produção, Vendas, Compras, Financeiro.
+        </p>
+      </div>
+    </section>
+
+  </main>
+  <!-- /conteúdo principal -->
+
+  <!-- Rodapé -->
+  <footer class="dashboard-footer">
+    <p class="text-muted">&copy; 2026 Auxtrat Soluções em Saneamento Ambiental</p>
+  </footer>
+
+  <!-- Firebase SDK (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+  <!-- Módulos do Sistema -->
+  <script src="frontEnd/js/firebase-core.js"></script>
+  <script src="frontEnd/js/auth-service.js"></script>
+  <script src="frontEnd/js/ui-controller.js"></script>
+  <script src="frontEnd/js/dashboard-controller.js"></script>
+
+</body>
+</html>
