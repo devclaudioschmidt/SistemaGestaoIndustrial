@@ -235,27 +235,74 @@
 }
 
 /* ==========================================================================
-   CRÉDITOS DO DESENVOLVEDOR (fixo no rodapé)
+   MARCA MOBILE (topo da página em telas pequenas)
    ========================================================================== */
-.dev-credit {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+.mobile-top-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px 0;
+  color: var(--text-on-primary);
+}
+
+.mobile-brand-content {
+  max-width: 280px;
+}
+
+.mobile-brand-icon {
+  width: 200px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-brand-icon .mobile-brand-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.mobile-brand-subtitle {
+  font-size: 0.875rem;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.85;
+}
+
+@media (min-width: 960px) {
+  .mobile-top-brand {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   CRÉDITOS DO DESENVOLVEDOR (compartilhado mobile + desktop)
+   ========================================================================== */
+.dev-credit,
+.dev-credit-mobile {
   text-align: center;
-  padding: 8px 20px;
-  width: fit-content;
-  white-space: nowrap;
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.9);
 }
 
-.dev-credit a {
+.dev-credit {
+  padding: 24px 20px 32px;
+}
+
+.dev-credit-mobile {
+  padding: 4px 20px 16px;
+}
+
+.dev-credit a,
+.dev-credit-mobile a {
   color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
 }
 
-.dev-credit a:hover {
+.dev-credit a:hover,
+.dev-credit-mobile a:hover {
   text-decoration: underline;
 }
 
@@ -287,8 +334,8 @@
   /* Coluna esquerda: marca com gradiente azul */
   .login-brand {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
     flex: 0 0 44%;
     background: linear-gradient(
       135deg,
@@ -299,6 +346,11 @@
   }
 
   .login-brand-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     color: var(--text-on-primary);
     max-width: 320px;
@@ -306,7 +358,7 @@
 
   .login-brand-icon {
     width: 280px;
-    margin: 0 auto 48px;
+    margin-bottom: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -348,14 +400,8 @@
     display: none;
   }
 
-  /* Créditos centralizados sobre a coluna azul */
-  .dev-credit {
-    left: 22vw;
-    transform: translateX(-50%);
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  .dev-credit a {
-    color: rgba(255, 255, 255, 0.9);
+  /* Oculta crédito mobile no desktop */
+  .dev-credit-mobile {
+    display: none;
   }
 }
