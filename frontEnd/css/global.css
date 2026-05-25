@@ -1,0 +1,251 @@
+/**
+ * global.css
+ * ===========================================================================
+ * Variáveis de design (Material Design 3), reset CSS e classes utilitárias
+ * reutilizáveis em todo o sistema de gestão industrial.
+ *
+ * Uso: Importado globalmente via <link> em todas as páginas do sistema.
+ * ===========================================================================
+ */
+
+/* ==========================================================================
+   VARIÁVEIS GLOBAIS (Paleta, Tipografia, Elevação)
+   ========================================================================== */
+:root {
+  /* Cores primárias - Azul Google */
+  --primary-color: #1a73e8;
+  --primary-hover: #1557b0;
+  --primary-light: #e8f0fe;
+
+  /* Cores secundárias - Verde Industrial */
+  --secondary-color: #2e7d32;
+  --secondary-light: #4caf50;
+  --secondary-bg: #e8f5e9;
+
+  /* Superfícies e fundos */
+  --background-site: #f0f4f8;
+  --surface-color: #ffffff;
+  --surface-hover: #f8f9fa;
+
+  /* Escala tipográfica */
+  --text-main: #202124;
+  --text-muted: #5f6368;
+  --text-on-primary: #ffffff;
+
+  /* Bordas e estados */
+  --border-color: #dadce0;
+  --border-focus: #1a73e8;
+  --border-error: #d93025;
+
+  /* Fonte principal */
+  --font-main: 'Roboto', sans-serif;
+
+  /* Bordas arredondadas */
+  --radius-default: 8px;
+  --radius-round: 24px;
+
+  /* Sombras (elevação Material Design) */
+  --shadow-card: 0 1px 3px 0 rgba(60, 64, 67, 0.3),
+    0 4px 8px 3px rgba(60, 64, 67, 0.15);
+  --shadow-input: 0 1px 2px 0 rgba(60, 64, 67, 0.3),
+    0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  --shadow-button: 0 1px 2px 0 rgba(60, 64, 67, 0.3),
+    0 2px 6px 2px rgba(60, 64, 67, 0.15);
+  --shadow-1: 0 1px 2px 0 rgba(60, 64, 67, 0.3),
+    0 1px 3px 1px rgba(60, 64, 67, 0.15);
+
+  /* Transições */
+  --transition-fast: all 0.2s ease-in-out;
+  --transition-medium: all 0.3s ease-in-out;
+}
+
+/* ==========================================================================
+   RESET
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--background-site);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   ELEMENTOS BASE
+   ========================================================================== */
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+input,
+button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* ==========================================================================
+   UTILITÁRIOS GLOBAIS
+   ========================================================================== */
+/* Elemento visível apenas para leitores de tela */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ==========================================================================
+   COMPONENTES REUTILIZÁVEIS
+   ========================================================================== */
+
+/* Botão principal (Google MD3) */
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--text-on-primary);
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-round);
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  box-shadow: var(--shadow-button);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  background-color: var(--border-color);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Spinner de loading dentro do botão */
+.btn-primary .spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: none;
+}
+
+.btn-primary.is-loading .spinner {
+  display: inline-block;
+}
+
+.btn-primary.is-loading .btn-text {
+  display: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Campo de input padrão */
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-default);
+  font-size: 1rem;
+  color: var(--text-main);
+  background-color: var(--surface-color);
+  transition: var(--transition-fast);
+  outline: none;
+}
+
+.input-field::placeholder {
+  color: var(--text-muted);
+}
+
+.input-field:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.input-field.is-error {
+  border-color: var(--border-error);
+  box-shadow: 0 0 0 2px rgba(217, 48, 37, 0.15);
+}
+
+/* Card padrão (elevação sutil) */
+.card-google {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-default);
+  padding: 24px;
+  transition: var(--transition-fast);
+}
+
+.card-google:hover {
+  box-shadow: var(--shadow-card);
+}
+
+/* Utilitários de texto */
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-center {
+  text-align: center;
+}

@@ -1,0 +1,361 @@
+/**
+ * login.css
+ * ===========================================================================
+ * Estilos específicos da tela de login.
+ * Responsivo: mobile-first com breakpoint em 960px para layout duas colunas.
+ *
+ * Depende de: global.css (variáveis CSS e utilitários)
+ * ===========================================================================
+ */
+
+/* ==========================================================================
+   LAYOUT PRINCIPAL (Mobile First)
+   ========================================================================== */
+.login-page {
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    #64b5f6 0%,
+    var(--primary-color) 50%,
+    #0d47a1 100%
+  );
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* ==========================================================================
+   COLUDA DA MARCA (oculta no mobile)
+   ========================================================================== */
+.login-brand {
+  display: none;
+}
+
+/* ==========================================================================
+   COLUNA DO FORMULÁRIO (mobile: sobre o gradiente)
+   ========================================================================== */
+.login-form-column {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+/* ==========================================================================
+   CARD DE LOGIN
+   ========================================================================== */
+.login-card {
+  background: var(--surface-color);
+  border-radius: var(--radius-default);
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--shadow-card);
+}
+
+/* ==========================================================================
+   CABEÇALHO DO CARD
+   ========================================================================== */
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo {
+  width: 150px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-logo .card-logo-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.login-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   FORMULÁRIO
+   ========================================================================== */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-wrapper .input-field {
+  padding-right: 44px;
+}
+
+/* Botão de toggle de visibilidade da senha */
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: var(--transition-fast);
+}
+
+.toggle-password:hover {
+  color: var(--text-main);
+}
+
+.toggle-password svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Mensagem de erro do campo */
+.field-error {
+  font-size: 0.75rem;
+  color: var(--border-error);
+  display: none;
+}
+
+.field-error.is-visible {
+  display: block;
+}
+
+/* ==========================================================================
+   OPÇÕES DO FORMULÁRIO
+   ========================================================================== */
+.login-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.remember-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.remember-group input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.forgot-link {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.forgot-link:hover {
+  color: var(--primary-hover);
+}
+
+/* ==========================================================================
+   RODAPÉ DO CARD
+   ========================================================================== */
+.login-footer {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   ALERTAS E MENSAGENS
+   ========================================================================== */
+.alert-message {
+  padding: 12px 16px;
+  border-radius: var(--radius-default);
+  font-size: 0.875rem;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.alert-message.is-visible {
+  display: flex;
+}
+
+.alert-message.is-error {
+  background-color: rgba(217, 48, 37, 0.08);
+  color: var(--border-error);
+  border: 1px solid rgba(217, 48, 37, 0.2);
+}
+
+.alert-message.is-success {
+  background-color: var(--secondary-bg);
+  color: var(--secondary-color);
+  border: 1px solid rgba(46, 125, 50, 0.2);
+}
+
+.alert-message svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   CRÉDITOS DO DESENVOLVEDOR (fixo no rodapé)
+   ========================================================================== */
+.dev-credit {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  padding: 8px 20px;
+  width: fit-content;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dev-credit a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+}
+
+.dev-credit a:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   BREAKPOINT TABLET / SMALL DESKTOP
+   ========================================================================== */
+@media (min-width: 600px) {
+  .login-card {
+    padding: 40px 32px;
+  }
+
+  .login-title {
+    font-size: 1.75rem;
+  }
+}
+
+/* ==========================================================================
+   BREAKPOINT DESKTOP (duas colunas)
+   ========================================================================== */
+@media (min-width: 960px) {
+  .login-page {
+    background: none;
+  }
+
+  .login-container {
+    flex-direction: row;
+  }
+
+  /* Coluna esquerda: marca com gradiente azul */
+  .login-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 44%;
+    background: linear-gradient(
+      135deg,
+      #64b5f6 0%,
+      var(--primary-color) 50%,
+      #0d47a1 100%
+    );
+  }
+
+  .login-brand-content {
+    text-align: center;
+    color: var(--text-on-primary);
+    max-width: 320px;
+  }
+
+  .login-brand-icon {
+    width: 280px;
+    margin: 0 auto 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .login-brand-icon .brand-image {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .login-brand-subtitle {
+    font-size: 1rem;
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+
+  /* Coluna direita: formulário com fundo branco e textura */
+  .login-form-column {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background-color: var(--surface-color);
+    background-image: radial-gradient(circle, #e0e0e0 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .login-card {
+    padding: 32px 24px;
+    max-width: 420px;
+  }
+
+  .login-logo {
+    display: none;
+  }
+
+  /* Créditos centralizados sobre a coluna azul */
+  .dev-credit {
+    left: 22vw;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .dev-credit a {
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
