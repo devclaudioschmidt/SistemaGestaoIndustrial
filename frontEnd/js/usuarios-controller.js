@@ -195,7 +195,7 @@ const UsuariosController = {
         const perfil = await AuthService.getPerfilUsuario(user.uid);
 
         if (!perfil || perfil.cargo !== "master") {
-          window.location.href = "/dashboard.html";
+          window.location.href = "/pages/dashboard.html";
           return;
         }
 
