@@ -31,15 +31,16 @@
 }
 
 .topbar-logo {
-  height: 32px;
+  height: 50px;
   width: auto;
 }
 
 .topbar-app-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  display: none;
+  flex: 1;
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-main);
 }
 
 .topbar-right {
@@ -56,21 +57,20 @@
 }
 
 .btn-logout {
-  padding: 6px 16px;
-  border: 1px solid var(--border-color);
+  padding: 8px 20px;
+  border: none;
   border-radius: var(--radius-round);
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-main);
-  background: var(--surface-color);
+  color: var(--text-on-primary);
+  background: var(--primary-color);
   cursor: pointer;
   transition: var(--transition-fast);
 }
 
 .btn-logout:hover {
-  background: var(--surface-hover);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-button);
 }
 
 /* ==========================================================================
@@ -153,10 +153,6 @@
    BREAKPOINT TABLET / DESKTOP
    ========================================================================== */
 @media (min-width: 600px) {
-  .topbar-app-name {
-    display: inline;
-  }
-
   .topbar-user-info {
     display: inline;
   }
