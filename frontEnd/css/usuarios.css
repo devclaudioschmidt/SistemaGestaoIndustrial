@@ -9,71 +9,6 @@
  */
 
 /* ==========================================================================
-   TOPBAR (mesmo padrão do dashboard)
-   ========================================================================== */
-.usuarios-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 24px;
-  background: var(--surface-color);
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: var(--shadow-1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.usuarios-topbar .topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.usuarios-topbar .topbar-logo {
-  height: 50px;
-  width: auto;
-}
-
-.usuarios-topbar .topbar-app-name {
-  flex: 1;
-  text-align: center;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.usuarios-topbar .topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.usuarios-topbar .topbar-user-info {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  display: none;
-  text-align: right;
-}
-
-.usuarios-topbar .btn-logout {
-  padding: 8px 20px;
-  border: none;
-  border-radius: var(--radius-round);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-on-primary);
-  background: var(--primary-color);
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.usuarios-topbar .btn-logout:hover {
-  background: var(--primary-hover);
-  box-shadow: var(--shadow-button);
-}
-
-/* ==========================================================================
    CONTEÚDO PRINCIPAL
    ========================================================================== */
 .usuarios-main {
@@ -515,10 +450,6 @@
    BREAKPOINTS
    ========================================================================== */
 @media (min-width: 600px) {
-  .usuarios-topbar .topbar-user-info {
-    display: inline;
-  }
-
   .usuarios-main {
     padding: 40px 24px;
   }
@@ -529,6 +460,10 @@
 }
 
 @media (max-width: 599px) {
+  .app-topbar .topbar-app-name {
+    display: none;
+  }
+
   .usuarios-table thead {
     display: none;
   }
@@ -574,5 +509,24 @@
   .modal-container {
     max-width: 100%;
     margin: 0 8px;
+  }
+}
+
+/* ==========================================================================
+   BREAKPOINT DESKTOP
+   ========================================================================== */
+@media (min-width: 960px) {
+  .app-topbar .topbar-app-name {
+    display: none;
+  }
+
+  .usuarios-main {
+    max-width: none;
+    margin-left: 240px;
+    padding: 40px 24px;
+  }
+
+  .app-footer {
+    margin-left: 240px;
   }
 }

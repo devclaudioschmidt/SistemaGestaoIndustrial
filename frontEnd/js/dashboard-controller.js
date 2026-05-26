@@ -29,8 +29,8 @@ const DashboardController = {
       welcomeName: document.getElementById("welcome-name"),
       welcomeRole: document.getElementById("welcome-role"),
       welcomeAvatar: document.getElementById("welcome-avatar"),
-      userInfo: document.getElementById("dashboard-user-info"),
-      logoutButton: document.getElementById("dashboard-logout"),
+      userInfo: document.getElementById("user-info"),
+      logoutButton: document.getElementById("logout-btn"),
     };
   },
 

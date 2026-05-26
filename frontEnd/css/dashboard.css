@@ -9,71 +9,6 @@
  */
 
 /* ==========================================================================
-   TOPBAR
-   ========================================================================== */
-.dashboard-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 24px;
-  background: var(--surface-color);
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: var(--shadow-1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.topbar-logo {
-  height: 50px;
-  width: auto;
-}
-
-.topbar-app-name {
-  flex: 1;
-  text-align: center;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.topbar-user-info {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  display: none;
-  text-align: right;
-}
-
-.btn-logout {
-  padding: 8px 20px;
-  border: none;
-  border-radius: var(--radius-round);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-on-primary);
-  background: var(--primary-color);
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.btn-logout:hover {
-  background: var(--primary-hover);
-  box-shadow: var(--shadow-button);
-}
-
-/* ==========================================================================
    CONTEÚDO PRINCIPAL
    ========================================================================== */
 .dashboard-main {
@@ -141,27 +76,29 @@
 }
 
 /* ==========================================================================
-   RODAPÉ
-   ========================================================================== */
-.dashboard-footer {
-  text-align: center;
-  padding: 24px;
-  font-size: 0.75rem;
-}
-
-/* ==========================================================================
-   BREAKPOINT TABLET / DESKTOP
+   BREAKPOINT TABLET
    ========================================================================== */
 @media (min-width: 600px) {
-  .topbar-user-info {
-    display: inline;
-  }
-
   .dashboard-main {
     padding: 48px 24px;
   }
 
   .welcome-name {
     font-size: 1.75rem;
+  }
+}
+
+/* ==========================================================================
+   BREAKPOINT DESKTOP
+   ========================================================================== */
+@media (min-width: 960px) {
+  .dashboard-main {
+    max-width: none;
+    margin-left: 240px;
+    padding: 48px 24px;
+  }
+
+  .app-footer {
+    margin-left: 240px;
   }
 }

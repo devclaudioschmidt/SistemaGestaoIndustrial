@@ -17,6 +17,7 @@ const UiController = {
   init() {
     this.setupPasswordToggles();
     this.setupRippleEffect();
+    this.setupSidebar();
   },
 
   /**
@@ -92,6 +93,41 @@ const UiController = {
       });
     });
   },
+
+  /**
+   * Configura os listeners da sidebar (hamburger, overlay e ESC).
+   * Funciona em qualquer página que tenha os elementos com IDs:
+   * hamburger-btn, sidebar-nav, sidebar-overlay.
+   */
+  setupSidebar() {
+    const hamburgerBtn = document.getElementById("hamburger-btn");
+    const sidebarNav = document.getElementById("sidebar-nav");
+    const sidebarOverlay = document.getElementById("sidebar-overlay");
+
+    if (!hamburgerBtn || !sidebarNav || !sidebarOverlay) return;
+
+    hamburgerBtn.addEventListener("click", () => {
+      const isOpen = sidebarNav.classList.toggle("is-open");
+      sidebarOverlay.classList.toggle("is-open", isOpen);
+      document.body.style.overflow = isOpen ? "hidden" : "";
+    });
+
+    sidebarOverlay.addEventListener("click", () => {
+      sidebarNav.classList.remove("is-open");
+      sidebarOverlay.classList.remove("is-open");
+      document.body.style.overflow = "";
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        sidebarNav.classList.remove("is-open");
+        sidebarOverlay.classList.remove("is-open");
+        document.body.style.overflow = "";
+      }
+    });
+  },
 };
 
 document.addEventListener('DOMContentLoaded', () => UiController.init());
+
+

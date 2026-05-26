@@ -23,7 +23,7 @@
   --secondary-bg: #e8f5e9;
 
   /* Superfícies e fundos */
-  --background-site: #f0f4f8;
+  --background-site: #ffffff;
   --surface-color: #ffffff;
   --surface-hover: #f8f9fa;
 
@@ -239,6 +239,216 @@ ol {
 
 .card-google:hover {
   box-shadow: var(--shadow-card);
+}
+
+/* ==========================================================================
+   TOPBAR PADRÃO (compartilhado)
+   ========================================================================== */
+.app-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 24px;
+  background: var(--surface-color);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-topbar .topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-topbar .topbar-logo {
+  height: 50px;
+  width: auto;
+}
+
+.app-topbar .topbar-app-name {
+  flex: 1;
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.app-topbar .topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-topbar .topbar-user-info {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: none;
+  text-align: right;
+}
+
+.app-topbar .btn-logout {
+  padding: 8px 20px;
+  border: none;
+  border-radius: var(--radius-round);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-on-primary);
+  background: var(--primary-color);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.app-topbar .btn-logout:hover {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-button);
+}
+
+/* ==========================================================================
+   RODAPÉ PADRÃO (compartilhado)
+   ========================================================================== */
+.app-footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 0.75rem;
+}
+
+/* ==========================================================================
+   SIDEBAR NAV — COMPARTILHADO
+   ========================================================================== */
+.hamburger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+}
+
+.hamburger-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-main);
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+}
+
+.sidebar-overlay.is-open {
+  display: block;
+}
+
+.sidebar-nav {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100%;
+  background: var(--primary-color);
+  color: var(--text-on-primary);
+  z-index: 300;
+  transition: left 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-nav.is-open {
+  left: 0;
+}
+
+.sidebar-header {
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  margin: 0 12px 0 0;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 0 24px 24px 0;
+  transition: var(--transition-fast);
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.sidebar-item.is-active {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.sidebar-item svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+/* Mobile: oculta nome do sistema na topbar */
+@media (max-width: 599px) {
+  .app-topbar .topbar-app-name {
+    display: none;
+  }
+}
+
+/* Tablet+: exibe info do usuário na topbar */
+@media (min-width: 600px) {
+  .app-topbar .topbar-user-info {
+    display: inline;
+  }
+}
+
+/* Sidebar fixa no desktop */
+@media (min-width: 960px) {
+  .hamburger-btn {
+    display: none;
+  }
+
+  .sidebar-overlay {
+    display: none !important;
+  }
+
+  .sidebar-nav {
+    left: 0;
+    top: 66px;
+    width: 240px;
+    height: calc(100% - 66px);
+    z-index: 50;
+  }
 }
 
 /* Utilitários de texto */

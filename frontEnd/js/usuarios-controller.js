@@ -52,8 +52,8 @@ const UsuariosController = {
   cacheElements() {
     this.elements = {
       // Topbar
-      userInfo: document.getElementById("usuarios-user-info"),
-      logoutButton: document.getElementById("usuarios-logout"),
+      userInfo: document.getElementById("user-info"),
+      logoutButton: document.getElementById("logout-btn"),
 
       // Tabela
       tableWrapper: document.getElementById("usuarios-table-wrapper"),
@@ -673,3 +673,4 @@ const UsuariosController = {
 };
 
 document.addEventListener("DOMContentLoaded", () => UsuariosController.init());
+
