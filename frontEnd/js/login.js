@@ -361,7 +361,7 @@ const LoginController = {
         this.redirecionarPorCargo(perfil);
       }, 1000);
     } catch (error) {
-      console.error("Erro de autenticação:", error);
+      console.error("[login] Erro completo:", { code: error.code, message: error.message, stack: error.stack });
       const mensagem = AuthService.traduzirErroFirebase(
         error.code || error.message
       );

@@ -267,6 +267,9 @@ const AuthService = {
         "Muitas tentativas. Tente novamente mais tarde.",
       "OPERATION_NOT_ALLOWED": "Operação não permitida.",
       "USER_NOT_FOUND": "Usuário não encontrado.",
+
+      "permission-denied": "Acesso negado. Verifique as permissões no Firestore.",
+      "PERMISSION_DENIED": "Acesso negado. Verifique as permissões no Firestore.",
     };
 
     return erros[chave] || "E-mail ou senha inválidos.";
