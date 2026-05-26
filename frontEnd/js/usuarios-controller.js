@@ -515,6 +515,8 @@ const UsuariosController = {
       this.fecharModal();
       await this.carregarUsuarios();
     } catch (error) {
+      console.error("[usuarios] Erro ao salvar:", error.code, error.message);
+      alert("Erro ao salvar: " + (AuthService.traduzirErroFirebase(error.code || error.message)));
       this.setLoadingSave(false);
     }
   },
