@@ -10,9 +10,6 @@
  * =============================================================================
  */
 const AuthService = {
-  /** Email do usuário master (cadastrado manualmente no Firebase Console) */
-  MASTER_EMAIL: window.MASTER_EMAIL,
-
   /**
    * Autentica o usuário com email e senha via Firebase Auth.
    * @param {string} email
@@ -161,22 +158,22 @@ const AuthService = {
   },
 
   /**
-   * Garante que o perfil do master exista no Firestore.
-   * Se não existir (primeiro login após criação manual no Firebase Console),
-   * cria automaticamente com cargo "master" e dados padrão.
-   * @param {string} uid - UID do master no Firebase Auth
-   * @param {string} email - Email do master
-   * @returns {Promise<Object>} Perfil do master
+   * Cria o perfil do primeiro acesso. Se nenhum master existir no sistema,
+   * o primeiro usuário a logar é promovido a master automaticamente.
+   * @param {string} uid - UID do usuário no Firebase Auth
+   * @param {string} email - Email do usuário
+   * @returns {Promise<Object|null>} Perfil criado ou null se já existir master
    */
-  async garantirPerfilMaster(uid, email) {
-    const perfil = await this.getPerfilUsuario(uid);
+  async garantirPrimeiroAcesso(uid, email) {
+    const configDoc = await db.collection("_config").doc("status").get();
+    const sistemaInicializado = configDoc.exists && configDoc.data()?.masterCriado;
 
-    if (perfil) return perfil;
+    if (sistemaInicializado) return null;
 
-    const novoPerfil = {
-      uid: uid,
+    const perfil = {
+      uid,
       nome: "Master",
-      email: email,
+      email,
       cargo: "master",
       ativo: true,
       criadoPor: uid,
@@ -186,10 +183,11 @@ const AuthService = {
       ultimoAcesso: null,
     };
 
-    await db.collection("usuarios").doc(uid).set(novoPerfil);
+    await db.collection("_config").doc("status").set({ masterCriado: true });
+    await db.collection("usuarios").doc(uid).set(perfil);
 
     return {
-      ...novoPerfil,
+      ...perfil,
       criadoEm: new Date().toISOString(),
       alteradoEm: new Date().toISOString(),
     };

@@ -10,8 +10,6 @@
  * Uso: Exclusivo da página index.html.
  * =============================================================================
  */
-console.log("[login.js] Script carregado");
-
 const LoginController = {
   elements: {},
   loginFormHtml: "",
@@ -21,10 +19,8 @@ const LoginController = {
    * Usa delegação de eventos no card para suportar toggle entre formulários.
    */
   init() {
-    console.log("[login.js] init() chamado");
     this.cacheElements();
     this.bindEvents();
-    console.log("[login.js] Eventos vinculados via delegação");
   },
 
   /**
@@ -322,12 +318,12 @@ const LoginController = {
       let perfil = await AuthService.getPerfilUsuario(dadosUsuario.uid);
 
       if (!perfil) {
-        if (email === AuthService.MASTER_EMAIL) {
-          perfil = await AuthService.garantirPerfilMaster(
-            dadosUsuario.uid,
-            email
-          );
-        } else {
+        perfil = await AuthService.garantirPrimeiroAcesso(
+          dadosUsuario.uid,
+          email
+        );
+
+        if (!perfil) {
           this.showAlert(
             "Usuário não encontrado. Contate o administrador.",
             "is-error"
