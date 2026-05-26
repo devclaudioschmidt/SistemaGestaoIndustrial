@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isMaster() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.cargo == "master";
+    }
+
+    match /_config/{doc} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && !exists(/databases/$(database)/documents/_config/$(doc));
+      allow update: if request.auth != null && isMaster();
+      allow delete: if false;
+    }
+
+    match /usuarios/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isMaster());
+      allow create: if request.auth != null && (request.auth.uid == uid || isMaster());
+      allow update: if request.auth != null && (request.auth.uid == uid || isMaster());
+      allow delete: if request.auth != null && isMaster();
+    }
+
+    match /pedidos/{pedidoId} {
+      allow read, create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if false;
+    }
+  }
+}

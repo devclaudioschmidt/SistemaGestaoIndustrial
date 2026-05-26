@@ -16,9 +16,6 @@
 (function () {
   try {
     if (typeof firebase === "undefined") {
-      console.error(
-        "[firebase-core] Firebase SDK não carregado. Verifique os scripts CDN."
-      );
       return;
     }
 
@@ -41,7 +38,5 @@
     // Habilita persistência offline para resiliência em quedas de rede.
     // O .catch() silencia o erro quando o navegador não suporta (ex: iOS Private).
     firebase.firestore().enablePersistence().catch(function () {});
-  } catch (error) {
-    console.error("[firebase-core] ERRO na inicialização:", error);
-  }
+  } catch (_) {}
 })();

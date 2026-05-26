@@ -357,7 +357,7 @@ const LoginController = {
         this.redirecionarPorCargo(perfil);
       }, 1000);
     } catch (error) {
-      console.error("[login] Erro completo:", { code: error.code, message: error.message, stack: error.stack });
+      console.error("[login] Erro completo:", { code: error.code, message: error.message });
       const mensagem = AuthService.traduzirErroFirebase(
         error.code || error.message
       );
@@ -408,12 +408,11 @@ const LoginController = {
             Verifique sua caixa de entrada e spam. O link expira em 1 hora.
           </p>
         </div>
-        <button type="button" class="btn-primary back-to-login-btn" onclick="LoginController.mostrarFormularioLogin()">
+        <button type="button" class="btn-primary back-to-login">
           Voltar ao login
         </button>
       `;
     } catch (error) {
-      console.error("Erro ao enviar reset:", error);
       const mensagem = AuthService.traduzirErroFirebase(
         error.code || error.message
       );

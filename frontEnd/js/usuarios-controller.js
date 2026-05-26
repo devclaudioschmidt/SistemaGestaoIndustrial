@@ -262,7 +262,7 @@ const UsuariosController = {
       <tr>
         <td>
           <div class="user-cell">
-            <span class="user-avatar" style="background:${this.CORES_CARGO[usuario.cargo] || "#888"}">${iniciais}</span>
+            <span class="user-avatar" style="background:${this.CORES_CARGO[usuario.cargo] || "#888"}">${this.escapeHtml(iniciais)}</span>
             <span class="user-name">${this.escapeHtml(usuario.nome)}</span>
           </div>
         </td>
@@ -271,12 +271,12 @@ const UsuariosController = {
         <td>${badgeStatus}</td>
         <td>
           <div class="action-buttons">
-            <button class="btn-action btn-edit" data-uid="${usuario.uid}" title="Editar usuário">
+            <button class="btn-action btn-edit" data-uid="${this.escapeHtml(usuario.uid)}" title="Editar usuário">
               <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                 <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
               </svg>
             </button>
-            <button class="btn-action btn-toggle" data-uid="${usuario.uid}" data-ativo="${usuario.ativo}" title="${usuario.ativo ? "Desativar" : "Ativar"} usuário">
+            <button class="btn-action btn-toggle" data-uid="${this.escapeHtml(usuario.uid)}" data-ativo="${usuario.ativo}" title="${usuario.ativo ? "Desativar" : "Ativar"} usuário">
               <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                 ${usuario.ativo
                   ? '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/>'
@@ -285,7 +285,7 @@ const UsuariosController = {
               </svg>
             </button>
             ${usuario.cargo !== "master" ? `
-            <button class="btn-action btn-delete" data-uid="${usuario.uid}" title="Excluir usuário">
+            <button class="btn-action btn-delete" data-uid="${this.escapeHtml(usuario.uid)}" title="Excluir usuário">
               <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                 <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
               </svg>
@@ -305,7 +305,7 @@ const UsuariosController = {
    */
   criarBadgeCargo(cargo) {
     const cor = this.CORES_CARGO[cargo] || "#888";
-    const rotulo = this.ROTULOS_CARGO[cargo] || cargo;
+    const rotulo = this.ROTULOS_CARGO[cargo] || this.escapeHtml(cargo);
     return `<span class="cargo-badge" style="background:${cor}20;color:${cor};border-color:${cor}40">${rotulo}</span>`;
   },
 
@@ -515,7 +515,6 @@ const UsuariosController = {
       this.fecharModal();
       await this.carregarUsuarios();
     } catch (error) {
-      console.error("[usuarios] Erro ao salvar:", error.code, error.message);
       alert("Erro ao salvar: " + (AuthService.traduzirErroFirebase(error.code || error.message)));
       this.setLoadingSave(false);
     }
