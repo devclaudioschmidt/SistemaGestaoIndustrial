@@ -45,10 +45,11 @@ const AuthService = {
    * @param {string} nome - Nome completo do usuário
    * @param {string} email - E-mail do usuário
    * @param {string} senha - Senha do usuário
-   * @param {string} cargo - Cargo/função do usuário
+   * @param {string} cargo - Cargo/função do usuário (uso informativo)
+   * @param {string[]} [regras] - Array de regras de acesso (ex: ["modulo.dashboard", "modulo.orcamentos"])
    * @returns {Promise<string>} UID do usuário criado
    */
-  async criarUsuario(nome, email, senha, cargo) {
+  async criarUsuario(nome, email, senha, cargo, regras) {
     const response = await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
       {
@@ -77,6 +78,7 @@ const AuthService = {
       nome: nome,
       email: email,
       cargo: cargo,
+      regras: regras || ["modulo.dashboard"],
       ativo: true,
       criadoPor: usuarioAtual ? usuarioAtual.uid : uid,
       criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
@@ -148,13 +150,30 @@ const AuthService = {
 
   /**
    * Busca o perfil de um usuário pelo UID no Firestore.
+   * Faz migração automática de usuários antigos que ainda não possuem
+   * o campo `regras`, inferindo permissões a partir do `cargo`.
    * @param {string} uid
    * @returns {Promise<Object|null>} Dados do usuário ou null se não existir
    */
   async getPerfilUsuario(uid) {
     const doc = await db.collection("usuarios").doc(uid).get();
     if (!doc.exists) return null;
-    return doc.data();
+
+    const dados = doc.data();
+
+    if (!dados.regras) {
+      const mapaCargoRegras = {
+        master: ["modulo.dashboard", "modulo.orcamentos", "modulo.usuarios"],
+        gerente: ["modulo.dashboard", "modulo.orcamentos"],
+        vendas: ["modulo.dashboard", "modulo.orcamentos"],
+        compras: ["modulo.dashboard"],
+        financeiro: ["modulo.dashboard"],
+        operadores: ["modulo.dashboard"],
+      };
+      dados.regras = mapaCargoRegras[dados.cargo] || ["modulo.dashboard"];
+    }
+
+    return dados;
   },
 
   /**
@@ -175,6 +194,7 @@ const AuthService = {
       nome: "Master",
       email,
       cargo: "master",
+      regras: ["modulo.dashboard", "modulo.orcamentos", "modulo.usuarios"],
       ativo: true,
       criadoPor: uid,
       criadoEm: firebase.firestore.FieldValue.serverTimestamp(),

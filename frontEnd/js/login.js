@@ -282,11 +282,13 @@ const LoginController = {
   },
 
   /**
-   * Redireciona o usuário com base no cargo após login bem-sucedido.
+   * Redireciona o usuário com base nas regras de acesso após login.
+   * Se tiver acesso a Usuários vai para o painel master,
+   * caso contrário vai para o Dashboard.
    * @param {Object} perfil
    */
   redirecionarPorCargo(perfil) {
-    if (perfil.cargo === "master") {
+    if (perfil.regras && perfil.regras.includes("modulo.usuarios")) {
       window.location.href = "pages/usuarios.html";
     } else {
       window.location.href = "pages/dashboard.html";

@@ -9,6 +9,52 @@
  * Uso: Importado globalmente em todas as páginas do sistema.
  * =============================================================================
  */
+
+/**
+ * Catálogo central de todas as regras de acesso disponíveis no sistema.
+ * Cada regra representa um módulo que pode ser liberado para um usuário.
+ * Usado tanto pela sidebar (ui-controller.js) quanto pelo formulário de
+ * usuários (usuarios-controller.js) para manter a definição em um único lugar.
+ */
+const REGRAS = [
+  { id: "modulo.dashboard",  nome: "Dashboard",  descricao: "Acessar o Dashboard principal do sistema" },
+  { id: "modulo.orcamentos", nome: "Or\u00e7amentos", descricao: "Acessar o m\u00f3dulo de Or\u00e7amentos" },
+  { id: "modulo.usuarios",   nome: "Usu\u00e1rios",  descricao: "Acessar o gerenciamento de Usu\u00e1rios" },
+];
+
+/**
+ * Catálogo de módulos do sistema.
+ * Cada módulo mapeia para uma regra de acesso (campo `regra`) que deve
+ * estar presente no array `regras` do perfil do usuário para ser exibido.
+ * Módulos com `pronto: false` são ocultos independentemente da regra.
+ */
+const MODULOS = [
+  {
+    id: "dashboard",
+    nome: "Dashboard",
+    url: "dashboard.html",
+    icone: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
+    regra: "modulo.dashboard",
+    pronto: true,
+  },
+  {
+    id: "orcamentos",
+    nome: "Or\u00e7amentos",
+    url: "orcamentos.html",
+    icone: "M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-7 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm6 12H6v-1c0-2 4-3.1 6-3.1s6 1.1 6 3.1v1z",
+    regra: "modulo.orcamentos",
+    pronto: true,
+  },
+  {
+    id: "usuarios",
+    nome: "Usu\u00e1rios",
+    url: "usuarios.html",
+    icone: "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z",
+    regra: "modulo.usuarios",
+    pronto: true,
+  },
+];
+
 const UiController = {
   /**
    * Inicializa todos os listeners globais da interface.
@@ -18,6 +64,49 @@ const UiController = {
     this.setupPasswordToggles();
     this.setupRippleEffect();
     this.setupSidebar();
+  },
+
+  /**
+   * Renderiza dinamicamente os itens do menu lateral com base nas regras
+   * de acesso do usuário, mostrando apenas módulos prontos cuja regra
+   * esteja presente no array `regras` do perfil.
+   * @param {string[]} regras - Array de regras liberadas para o usuário
+   * @param {string} moduloAtivo - ID do módulo atual (para highlight)
+   */
+  renderSidebar(regras, moduloAtivo) {
+    const sidebarNav = document.getElementById("sidebar-nav");
+    if (!sidebarNav) return;
+
+    const disponiveis = MODULOS.filter(
+      (m) => m.pronto && regras.includes(m.regra)
+    );
+
+    if (disponiveis.length === 0) {
+      sidebarNav.innerHTML = "";
+      return;
+    }
+
+    const prefix =
+      window.location.pathname.includes("/pages/") ? "" : "pages/";
+
+    sidebarNav.innerHTML = `
+      <div class="sidebar-header">
+        <span class="sidebar-title">M\u00f3dulos</span>
+      </div>
+      <ul class="sidebar-menu">
+        ${disponiveis
+          .map(
+            (m) => `
+          <li>
+            <a href="${moduloAtivo === m.id ? "#" : prefix + m.url}" class="sidebar-item${moduloAtivo === m.id ? " is-active" : ""}" data-module="${m.id}">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="${m.icone}"/></svg>
+              <span>${m.nome}</span>
+            </a>
+          </li>`
+          )
+          .join("")}
+      </ul>
+    `;
   },
 
   /**

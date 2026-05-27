@@ -83,6 +83,10 @@ const UsuariosController = {
       cargoError: document.getElementById("cargo-error"),
       senhaHelper: document.getElementById("senha-helper"),
 
+      // Regras
+      regrasContainer: document.getElementById("regras-container"),
+      regrasError: document.getElementById("regras-error"),
+
       // Modal confirmação
       confirmModal: document.getElementById("modal-confirm"),
       confirmTitle: document.getElementById("confirm-title"),
@@ -180,9 +184,9 @@ const UsuariosController = {
   },
 
   /**
-   * Verifica se há um usuário autenticado e se possui cargo "master".
-   * Redireciona para login se não houver sessão, ou para dashboard
-   * se não for master (acesso negado).
+   * Verifica se há um usuário autenticado e se possui a regra
+   * "modulo.usuarios". Redireciona para login se não houver sessão,
+   * ou para dashboard se não tiver permissão.
    */
   verificarAutenticacao() {
     auth.onAuthStateChanged(async (user) => {
@@ -194,11 +198,12 @@ const UsuariosController = {
       try {
         const perfil = await AuthService.getPerfilUsuario(user.uid);
 
-        if (!perfil || perfil.cargo !== "master") {
+        if (!perfil || !perfil.regras || !perfil.regras.includes("modulo.usuarios")) {
           window.location.href = "dashboard.html";
           return;
         }
 
+        UiController.renderSidebar(perfil.regras, "usuarios");
         this.elements.userInfo.textContent = `${perfil.email} | Master`;
         this.carregarUsuarios();
       } catch (error) {
@@ -336,8 +341,46 @@ const UsuariosController = {
   },
 
   /**
+   * Renderiza os checkboxes de regras de acesso no formulário.
+   * Usa o array global REGRAS definido em ui-controller.js para
+   * manter a lista centralizada e evitar duplicação.
+   * @param {string[]} [regrasSelecionadas] - Regras que devem vir marcadas
+   */
+  renderRegras(regrasSelecionadas) {
+    if (!this.elements.regrasContainer) return;
+    const selecionadas = regrasSelecionadas || [];
+
+    this.elements.regrasContainer.innerHTML = REGRAS
+      .map(
+        (r) => `
+      <label class="regra-checkbox${selecionadas.includes(r.id) ? " is-checked" : ""}">
+        <input type="checkbox" value="${r.id}"${selecionadas.includes(r.id) ? " checked" : ""} />
+        <span class="regra-checkbox-label">${r.nome}</span>
+      </label>`
+      )
+      .join("");
+
+    this.elements.regrasContainer.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        cb.closest(".regra-checkbox").classList.toggle("is-checked", cb.checked);
+        this.clearFieldError(this.elements.regrasContainer, this.elements.regrasError);
+      });
+    });
+  },
+
+  /**
+   * Coleta as regras atualmente marcadas nos checkboxes do formulário.
+   * @returns {string[]} Array com os IDs das regras selecionadas
+   */
+  getRegrasSelecionadas() {
+    const cbs = this.elements.regrasContainer.querySelectorAll("input[type=checkbox]:checked");
+    return Array.from(cbs).map((cb) => cb.value);
+  },
+
+  /**
    * Abre o modal no modo "novo usuário".
    * Reseta o formulário, configura título e botão,
+   * renderiza as regras com valor padrão (apenas dashboard),
    * e foca no campo de nome.
    */
   abrirModalNovo() {
@@ -351,6 +394,7 @@ const UsuariosController = {
     this.elements.form.reset();
     this.elements.uidInput.value = "";
     this.limparErros();
+    this.renderRegras(["modulo.dashboard"]);
     this.elements.modal.classList.add("is-open");
     setTimeout(() => this.elements.nomeInput.focus(), 100);
   },
@@ -378,6 +422,7 @@ const UsuariosController = {
     this.elements.emailInput.value = usuario.email || "";
     this.elements.senhaInput.value = "";
     this.elements.cargoSelect.value = usuario.cargo || "";
+    this.renderRegras(usuario.regras || ["modulo.dashboard"]);
 
     this.elements.emailInput.disabled = true;
     this.elements.modal.classList.add("is-open");
@@ -502,14 +547,24 @@ const UsuariosController = {
     const email = this.elements.emailInput.value.trim();
     const senha = this.elements.senhaInput.value;
     const cargo = this.elements.cargoSelect.value;
+    const regras = this.getRegrasSelecionadas();
+
+    if (regras.length === 0) {
+      this.showFieldError(
+        this.elements.regrasContainer,
+        this.elements.regrasError,
+        "Selecione ao menos uma regra de acesso."
+      );
+      return;
+    }
 
     this.setLoadingSave(true);
 
     try {
       if (uid) {
-        await AuthService.atualizarUsuario(uid, { nome, cargo });
+        await AuthService.atualizarUsuario(uid, { nome, cargo, regras });
       } else {
-        await AuthService.criarUsuario(nome, email, senha, cargo);
+        await AuthService.criarUsuario(nome, email, senha, cargo, regras);
       }
 
       this.fecharModal();
@@ -616,6 +671,7 @@ const UsuariosController = {
       { input: this.elements.emailInput, error: this.elements.emailError },
       { input: this.elements.senhaInput, error: this.elements.senhaError },
       { input: this.elements.cargoSelect, error: this.elements.cargoError },
+      { input: this.elements.regrasContainer, error: this.elements.regrasError },
     ].forEach(({ input, error }) => {
       input.classList.remove("is-error");
       error.classList.remove("is-visible");

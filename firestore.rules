@@ -2,22 +2,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isMaster() {
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.cargo == "master";
+    function isRegraIn(regrasPermitidas) {
+      let perfil = get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+      return perfil.regras.hasAny(regrasPermitidas);
     }
 
     match /_config/{doc} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && !exists(/databases/$(database)/documents/_config/$(doc));
-      allow update: if request.auth != null && isMaster();
+      allow update: if request.auth != null && isRegraIn(["modulo.usuarios"]);
       allow delete: if false;
     }
 
     match /usuarios/{uid} {
-      allow read: if request.auth != null && (request.auth.uid == uid || isMaster());
-      allow create: if request.auth != null && (request.auth.uid == uid || isMaster());
-      allow update: if request.auth != null && (request.auth.uid == uid || isMaster());
-      allow delete: if request.auth != null && isMaster();
+      allow read: if request.auth != null && (request.auth.uid == uid || isRegraIn(["modulo.usuarios"]));
+      allow create: if request.auth != null && (request.auth.uid == uid || isRegraIn(["modulo.usuarios"]));
+      allow update: if request.auth != null && (request.auth.uid == uid || isRegraIn(["modulo.usuarios"]));
+      allow delete: if request.auth != null && isRegraIn(["modulo.usuarios"]);
     }
 
     match /pedidos/{pedidoId} {
@@ -26,16 +27,11 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    function isCargoIn(cargos) {
-      let perfil = get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
-      return perfil.cargo in cargos;
-    }
-
     match /orcamentos/{orcamentoId} {
-      allow read: if request.auth != null && isCargoIn(["vendas", "gerente", "financeiro", "master"]);
-      allow create: if request.auth != null && isCargoIn(["vendas", "gerente", "master"]);
-      allow update: if request.auth != null && isCargoIn(["vendas", "gerente", "financeiro", "master"]);
-      allow delete: if request.auth != null && isCargoIn(["gerente", "master"]);
+      allow read: if request.auth != null && isRegraIn(["modulo.orcamentos"]);
+      allow create: if request.auth != null && isRegraIn(["modulo.orcamentos"]);
+      allow update: if request.auth != null && isRegraIn(["modulo.orcamentos"]);
+      allow delete: if request.auth != null && isRegraIn(["modulo.orcamentos"]);
     }
   }
 }

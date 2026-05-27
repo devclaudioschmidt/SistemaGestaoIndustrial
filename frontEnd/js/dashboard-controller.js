@@ -65,6 +65,7 @@ const DashboardController = {
         }
 
         this.exibirPerfil(perfil);
+        UiController.renderSidebar(perfil.regras || ["modulo.dashboard"], "dashboard");
       } catch (error) {
         window.location.href = "../index.html";
       }
