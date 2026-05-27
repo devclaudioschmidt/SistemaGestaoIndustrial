@@ -163,7 +163,7 @@ const AuthService = {
 
     if (!dados.regras) {
       const mapaCargoRegras = {
-        master: ["modulo.dashboard", "modulo.orcamentos", "modulo.usuarios"],
+        master: ["modulo.dashboard", "modulo.orcamentos", "modulo.usuarios", "modulo.configuracoes"],
         gerente: ["modulo.dashboard", "modulo.orcamentos"],
         vendas: ["modulo.dashboard", "modulo.orcamentos"],
         compras: ["modulo.dashboard"],
@@ -171,6 +171,10 @@ const AuthService = {
         operadores: ["modulo.dashboard"],
       };
       dados.regras = mapaCargoRegras[dados.cargo] || ["modulo.dashboard"];
+    }
+
+    if (dados.cargo === "master" && !dados.regras.includes("modulo.configuracoes")) {
+      dados.regras = [...dados.regras, "modulo.configuracoes"];
     }
 
     return dados;

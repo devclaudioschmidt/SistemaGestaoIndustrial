@@ -1,0 +1,181 @@
+/**
+ * configuracoes.css
+ * ===========================================================================
+ * Estilos da tela de Configurações da Empresa (acesso exclusivo do Master).
+ * Formulário dividido em seções/cards com grid responsivo.
+ *
+ * Depende de: global.css (variáveis CSS e utilitários)
+ * ===========================================================================
+ */
+
+.config-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.config-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.config-header .header-left {
+  flex: 1;
+  min-width: 200px;
+}
+
+.config-header .page-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.config-header .page-subtitle {
+  font-size: 0.875rem;
+}
+
+.btn-salvar-config {
+  width: auto;
+  white-space: nowrap;
+  padding: 10px 20px;
+  font-size: 0.875rem;
+}
+
+.form-notification {
+  padding: 12px 16px;
+  border-radius: var(--radius-default);
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: notif-enter 0.25s ease-out;
+}
+
+.form-notification.is-error {
+  background: #fce8e6;
+  color: var(--border-error);
+  border: 1px solid rgba(217, 48, 37, 0.2);
+}
+
+.form-notification.is-success {
+  background: var(--secondary-bg);
+  color: var(--secondary-color);
+  border: 1px solid rgba(46, 125, 50, 0.2);
+}
+
+@keyframes notif-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-section-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-main);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.form-grid-2col {
+  grid-template-columns: 1fr;
+}
+
+.form-grid-endereco {
+  grid-template-columns: 1fr;
+}
+
+.form-grid .input-full {
+  grid-column: 1 / -1;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.field-error {
+  font-size: 0.75rem;
+  color: var(--border-error);
+  display: none;
+}
+
+.field-error.is-visible {
+  display: block;
+}
+
+.input-textarea {
+  resize: vertical;
+  min-height: 60px;
+  font-family: var(--font-main);
+}
+
+.input-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%235f6368'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  cursor: pointer;
+  padding-right: 44px;
+}
+
+@media (min-width: 600px) {
+  .config-main {
+    padding: 40px 24px;
+  }
+
+  .config-header .page-title {
+    font-size: 1.75rem;
+  }
+
+  .form-grid-2col {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .form-grid-endereco {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 960px) {
+  .config-main {
+    max-width: none;
+    margin-left: 240px;
+    padding: 40px 24px;
+  }
+
+  .app-footer {
+    margin-left: 240px;
+  }
+}

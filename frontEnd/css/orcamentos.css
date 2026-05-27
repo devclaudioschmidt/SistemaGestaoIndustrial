@@ -943,6 +943,240 @@
 }
 
 /* ==========================================================================
+   CABEÇALHO DO DOCUMENTO (Bloco Duplo)
+   ========================================================================== */
+.orcamento-doc-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 8px;
+}
+
+.orcamento-doc-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.doc-logo {
+  max-height: 56px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.doc-company-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doc-company-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.doc-company-line {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.orcamento-doc-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.doc-type {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.doc-number {
+  font-size: 0.8125rem;
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.doc-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-end;
+}
+
+.doc-meta-item {
+  display: flex;
+  gap: 6px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.doc-meta-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.doc-meta-value {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   QUILL EDITOR (Rich Text)
+   ========================================================================== */
+.quill-editor {
+  min-height: 120px;
+}
+
+.quill-editor .ql-editor {
+  min-height: 120px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  font-family: var(--font-main);
+}
+
+.quill-editor .ql-container {
+  border-radius: 0 0 var(--radius-default) var(--radius-default);
+  border-color: var(--border-color);
+}
+
+.quill-editor .ql-toolbar {
+  border-radius: var(--radius-default) var(--radius-default) 0 0;
+  border-color: var(--border-color);
+  background: var(--surface-hover);
+}
+
+.quill-editor .ql-toolbar button:hover,
+.quill-editor .ql-toolbar button.ql-active {
+  color: var(--primary-color);
+}
+
+.quill-editor .ql-toolbar .ql-picker-label:hover,
+.quill-editor .ql-toolbar .ql-picker-label.ql-active {
+  color: var(--primary-color);
+}
+
+.quill-editor .ql-toolbar .ql-picker-item:hover,
+.quill-editor .ql-toolbar .ql-picker-item.ql-selected {
+  color: var(--primary-color);
+}
+
+/* ==========================================================================
+   IMPRESSÃO (@media print)
+   ========================================================================== */
+@media print {
+  @page {
+    margin: 15mm 10mm;
+  }
+
+  html {
+    font-size: 12pt;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .app-topbar,
+  .app-footer,
+  .sidebar-nav,
+  .sidebar-overlay,
+  .hamburger-btn,
+  .detail-actions,
+  .btn-primary,
+  .btn-cancel,
+  .btn-action,
+  .orcamentos-header,
+  .orcamentos-filters,
+  .form-notification,
+  .modal-overlay {
+    display: none !important;
+  }
+
+  .orcamentos-main {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .orcamentos-view {
+    gap: 0;
+  }
+
+  .card-google {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .detail-header {
+    border-bottom: 2px solid #000;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+
+  .detail-section {
+    page-break-inside: avoid;
+  }
+
+  .detail-itens-table th {
+    border-bottom: 2px solid #000;
+  }
+
+  .detail-itens-table td {
+    border-bottom: 1px solid #ccc;
+  }
+
+  .status-badge {
+    border: 1px solid #999;
+    background: #f5f5f5 !important;
+    color: #000 !important;
+  }
+
+  .status-badge::before {
+    display: none;
+  }
+
+  .doc-logo {
+    max-height: 48px;
+  }
+
+  .detail-numero {
+    color: #000;
+  }
+
+  .orcamento-doc-header {
+    border-bottom: 2px solid #000;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+
+  .doc-type {
+    color: #000;
+  }
+
+  .doc-number {
+    color: #333;
+  }
+}
+
+/* ==========================================================================
    BREAKPOINT TABLET (600px+)
    ========================================================================== */
 @media (min-width: 600px) {

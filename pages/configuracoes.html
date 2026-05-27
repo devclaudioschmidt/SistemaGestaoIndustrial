@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<!--
+  configuracoes.html
+  =============================================================================
+  Tela de configurações da empresa (acesso exclusivo do Master).
+  Gerencia dados cadastrais, contato, endereço e configurações dos orçamentos.
+  Os dados ficam em _config/empresa no Firestore e são consumidos dinamicamente
+  pelos orçamentos, faturas e demais documentos do sistema.
+  Depende de: global.css, configuracoes.css, ui-controller.js, configuracoes-controller.js
+  =============================================================================
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Configurações - Sistema de Gestão Industrial Auxtrat" />
+  <meta name="theme-color" content="#1a73e8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://*.firebaseio.com; frame-src 'none'; object-src 'none'; base-uri 'self';">
+  <title>Configurações - Auxtrat Gestão Industrial</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="../frontEnd/css/global.css" />
+  <link rel="stylesheet" href="../frontEnd/css/configuracoes.css" />
+</head>
+<body>
+
+  <header class="app-topbar">
+    <button id="hamburger-btn" class="hamburger-btn" aria-label="Abrir menu" type="button">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+      </svg>
+    </button>
+    <div class="topbar-left">
+      <img src="../frontEnd/img/logoAuxtrat.png" alt="Auxtrat" class="topbar-logo" />
+    </div>
+    <span class="topbar-app-name">Sistema de Gestão Industrial</span>
+    <div class="topbar-right">
+      <span id="user-info" class="topbar-user-info"></span>
+      <button id="logout-btn" class="btn-logout">Sair</button>
+    </div>
+  </header>
+
+  <main class="config-main">
+
+    <section class="config-header">
+      <div class="header-left">
+        <h1 class="page-title">Configurações da Empresa</h1>
+        <p class="page-subtitle text-muted">Gerencie os dados que aparecem nos orçamentos e documentos do sistema</p>
+      </div>
+      <button id="btn-salvar-config" class="btn-primary btn-salvar-config">
+        <span class="spinner"></span>
+        <span class="btn-text">Salvar Alterações</span>
+      </button>
+    </section>
+
+    <div id="config-notification" class="form-notification" role="alert" style="display:none"></div>
+
+    <form id="config-form" class="config-form" novalidate>
+
+      <section class="form-section card-google">
+        <h2 class="form-section-title">Dados da Empresa</h2>
+        <div class="form-grid form-grid-2col">
+          <div class="input-group">
+            <label for="config-nome" class="input-label">Razão Social</label>
+            <input type="text" id="config-nome" class="input-field" placeholder="Nome da empresa" required />
+            <span id="config-nome-error" class="field-error" role="alert"></span>
+          </div>
+          <div class="input-group">
+            <label for="config-nome-fantasia" class="input-label">Nome Fantasia</label>
+            <input type="text" id="config-nome-fantasia" class="input-field" placeholder="Nome fantasia" />
+          </div>
+          <div class="input-group">
+            <label for="config-cnpj" class="input-label">CNPJ</label>
+            <input type="text" id="config-cnpj" class="input-field" placeholder="00.000.000/0001-00" />
+          </div>
+          <div class="input-group">
+            <label for="config-ie" class="input-label">Inscrição Estadual</label>
+            <input type="text" id="config-ie" class="input-field" placeholder="000.000.000.000" />
+          </div>
+          <div class="input-group">
+            <label for="config-im" class="input-label">Inscrição Municipal</label>
+            <input type="text" id="config-im" class="input-field" placeholder="000.000.000" />
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section card-google">
+        <h2 class="form-section-title">Contato</h2>
+        <div class="form-grid form-grid-2col">
+          <div class="input-group">
+            <label for="config-telefone" class="input-label">Telefone</label>
+            <input type="tel" id="config-telefone" class="input-field" placeholder="(00) 00000-0000" />
+          </div>
+          <div class="input-group">
+            <label for="config-email" class="input-label">E-mail</label>
+            <input type="email" id="config-email" class="input-field" placeholder="contato@auxtrat.com" />
+          </div>
+          <div class="input-group input-full">
+            <label for="config-site" class="input-label">Site</label>
+            <input type="url" id="config-site" class="input-field" placeholder="https://www.auxtrat.com" />
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section card-google">
+        <h2 class="form-section-title">Endereço</h2>
+        <div class="form-grid form-grid-endereco">
+          <div class="input-group input-full">
+            <label for="config-logradouro" class="input-label">Logradouro</label>
+            <input type="text" id="config-logradouro" class="input-field" placeholder="Rua, Avenida..." />
+          </div>
+          <div class="input-group">
+            <label for="config-numero" class="input-label">Número</label>
+            <input type="text" id="config-numero" class="input-field" placeholder="Nº" />
+          </div>
+          <div class="input-group">
+            <label for="config-complemento" class="input-label">Complemento</label>
+            <input type="text" id="config-complemento" class="input-field" placeholder="Apto, Bloco..." />
+          </div>
+          <div class="input-group">
+            <label for="config-bairro" class="input-label">Bairro</label>
+            <input type="text" id="config-bairro" class="input-field" placeholder="Bairro" />
+          </div>
+          <div class="input-group">
+            <label for="config-cidade" class="input-label">Cidade</label>
+            <input type="text" id="config-cidade" class="input-field" placeholder="Cidade" />
+          </div>
+          <div class="input-group">
+            <label for="config-estado" class="input-label">Estado</label>
+            <select id="config-estado" class="input-field input-select">
+              <option value="">Selecione...</option>
+              <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
+              <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
+              <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
+              <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+              <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
+              <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
+              <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
+              <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+              <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="config-cep" class="input-label">CEP</label>
+            <input type="text" id="config-cep" class="input-field" placeholder="00000-000" />
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section card-google">
+        <h2 class="form-section-title">Configurações do Orçamento</h2>
+        <div class="form-grid form-grid-2col">
+          <div class="input-group">
+            <label for="config-validade" class="input-label">Validade Padrão (dias)</label>
+            <input type="number" id="config-validade" class="input-field" value="30" min="1" max="365" />
+          </div>
+          <div class="input-group input-full">
+            <label for="config-rodape" class="input-label">Mensagem de Rodapé</label>
+            <textarea id="config-rodape" class="input-field input-textarea" placeholder="Obrigado pela preferência!" rows="2"></textarea>
+          </div>
+        </div>
+      </section>
+
+    </form>
+  </main>
+
+  <nav id="sidebar-nav" class="sidebar-nav" aria-label="Navegação principal"></nav>
+
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <footer class="app-footer">
+    <p class="text-muted">&copy; 2026 Auxtrat Solu&ccedil;&otilde;es em Saneamento Ambiental</p>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+  <script src="../backEnd/js/firebase-core.js"></script>
+  <script src="../backEnd/js/auth-service.js"></script>
+  <script src="../frontEnd/js/ui-controller.js"></script>
+  <script src="../frontEnd/js/masks.js"></script>
+  <script src="../frontEnd/js/configuracoes-controller.js"></script>
+
+</body>
+</html>

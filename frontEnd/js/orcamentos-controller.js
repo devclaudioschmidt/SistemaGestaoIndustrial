@@ -15,6 +15,11 @@ const OrcamentosController = {
   orcamentoEditando: null,
   usuarioPerfil: null,
   itemCounter: 0,
+  configEmpresa: null,
+
+  get podeVerTodos() {
+    return ["master", "gerente", "financeiro"].includes(this.usuarioPerfil?.cargo);
+  },
 
   STATUS: {
     RASCUNHO: "rascunho",
@@ -42,9 +47,26 @@ const OrcamentosController = {
 
   init() {
     this.cacheElements();
+    this.iniciarQuill();
     this.bindEvents();
     this.aplicarMascaras();
     this.verificarAutenticacao();
+  },
+
+  iniciarQuill() {
+    if (!this.elements.descricaoEditor) return;
+    this.quill = new Quill("#descricao-editor", {
+      theme: "snow",
+      modules: {
+        toolbar: [
+          ["bold", "italic", "underline"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          [{ align: "" }, { align: "center" }],
+          [{ size: ["small", false, "large", "huge"] }],
+          ["clean"],
+        ],
+      },
+    });
   },
 
   aplicarMascaras() {
@@ -103,6 +125,7 @@ const OrcamentosController = {
       descontoInput: document.getElementById("desconto-input"),
       totalValor: document.getElementById("total-valor"),
 
+      descricaoEditor: document.getElementById("descricao-editor"),
       observacoesInput: document.getElementById("observacoes-input"),
 
       modalPosConclusao: document.getElementById("modal-pos-conclusao"),
@@ -251,6 +274,7 @@ const OrcamentosController = {
         this.usuarioPerfil = perfil;
         UiController.renderSidebar(perfil.regras, "orcamentos");
         this.elements.userInfo.textContent = `${perfil.email} | ${AuthService.ROTULOS_CARGO ? AuthService.ROTULOS_CARGO[perfil.cargo] || perfil.cargo : perfil.cargo}`;
+        await this.carregarConfigEmpresa();
         this.carregarOrcamentos();
       } catch (error) {
         window.location.href = "../index.html";
@@ -261,20 +285,54 @@ const OrcamentosController = {
   async carregarOrcamentos() {
     this.mostrarLoading(true);
     try {
-      const snapshot = await db.collection("orcamentos").get();
+      let query = db.collection("orcamentos");
+      if (!this.podeVerTodos) {
+        query = query.where("vendedorId", "==", auth.currentUser.uid);
+      }
+      const snapshot = await query.get();
       this.orcamentos = [];
       snapshot.forEach((doc) => {
         this.orcamentos.push({ id: doc.id, ...doc.data() });
       });
       this.orcamentos.sort((a, b) => {
-        const aTime = a.audit?.criadoEm?.toDate?.() || new Date(0);
-        const bTime = b.audit?.criadoEm?.toDate?.() || new Date(0);
-        return bTime - aTime;
+        const numA = a.numeroOrcamento || "";
+        const numB = b.numeroOrcamento || "";
+        return numB.localeCompare(numA);
       });
       this.renderizarCards();
     } catch (error) {
       this.mostrarLoading(false);
     }
+  },
+
+  async carregarConfigEmpresa() {
+    try {
+      const doc = await db.collection("_config").doc("empresa").get();
+      this.configEmpresa = doc.exists ? doc.data() : null;
+    } catch (error) {
+      this.configEmpresa = null;
+    }
+  },
+
+  async gerarProximoNumero() {
+    const anoAtual = new Date().getFullYear().toString();
+    let maxSeq = 0;
+    try {
+      const snapshot = await db.collection("orcamentos").get();
+      snapshot.forEach((d) => {
+        const orc = d.data();
+        if (orc.numeroOrcamento) {
+          const match = orc.numeroOrcamento.match(/ORC-(\d{4})-(\d{4})/);
+          if (match && match[1] === anoAtual) {
+            const seq = parseInt(match[2], 10);
+            if (seq > maxSeq) maxSeq = seq;
+          }
+        }
+      });
+    } catch (e) {
+      /**/
+    }
+    return `ORC-${anoAtual}-${String(maxSeq + 1).padStart(4, "0")}`;
   },
 
   renderizarCards(filtroStatus, filtroBusca, filtroVendedor) {
@@ -344,6 +402,13 @@ const OrcamentosController = {
   popularFiltroVendedor() {
     const select = this.elements.filterVendedor;
     if (!select) return;
+
+    const filtroGroup = select.closest(".filter-group");
+    if (filtroGroup) {
+      filtroGroup.style.display = this.podeVerTodos ? "" : "none";
+    }
+    if (!this.podeVerTodos) return;
+
     const vendedores = [
       ...new Set(
         this.orcamentos
@@ -376,6 +441,7 @@ const OrcamentosController = {
     this.elements.formTitle.textContent = "Novo Orçamento";
     this.elements.orcamentoId.value = "";
     this.elements.form.reset();
+    if (this.quill) this.quill.root.innerHTML = "";
     this.elements.descontoInput.value = "0";
     this.elements.itensTbody.innerHTML = "";
     this.adicionarLinhaItem();
@@ -420,6 +486,7 @@ const OrcamentosController = {
     this.elements.clienteCidade.value = end.cidade || "";
     this.elements.clienteEstado.value = end.estado || "";
     this.elements.clienteCep.value = InputMasks.formatarCep(end.cep || "");
+    if (this.quill) this.quill.root.innerHTML = orc.descricao || "";
     this.elements.observacoesInput.value = orc.observacoes || "";
 
     this.elements.descontoInput.value = (orc.valores && orc.valores.desconto) || 0;
@@ -537,6 +604,7 @@ const OrcamentosController = {
       cliente,
       itens,
       valores: { subtotal, desconto, total },
+      descricao: this.quill ? (this.quill.root.innerHTML === "<p><br></p>" ? "" : this.quill.root.innerHTML) : "",
       observacoes: this.elements.observacoesInput.value.trim(),
     };
   },
@@ -611,20 +679,28 @@ const OrcamentosController = {
 
     try {
       if (id) {
-        await db.collection("orcamentos").doc(id).update({
+        const updateData = {
           ...dados,
           status,
           audit: {
             alteradoPor: usuario.uid,
             alteradoEm: agora,
           },
-        });
+        };
+
+        if (abrirModal) {
+          const docAtual = await db.collection("orcamentos").doc(id).get();
+          if (docAtual.exists && !docAtual.data().numeroOrcamento) {
+            updateData.numeroOrcamento = await this.gerarProximoNumero();
+          }
+        }
+
+        await db.collection("orcamentos").doc(id).update(updateData);
       } else {
-        const countSnapshot = await db.collection("orcamentos").get();
-        const numero = `ORC-${new Date().getFullYear()}-${String(countSnapshot.size + 1).padStart(4, "0")}`;
+        const numero = abrirModal ? await this.gerarProximoNumero() : null;
 
         const orcData = {
-          numeroOrcamento: numero,
+          ...(numero ? { numeroOrcamento: numero } : {}),
           ...dados,
           status,
           analiseFinanceira: {
@@ -699,39 +775,61 @@ const OrcamentosController = {
       )
       .join("");
 
+    const cfg = this.configEmpresa || {};
+    const cfgEnd = cfg.endereco || {};
+    const dataCriacao = orc.audit?.criadoEm
+      ? new Date(orc.audit.criadoEm).toLocaleDateString("pt-BR")
+      : "";
+    const validade = cfg.orcamento?.validadePadrao || 30;
+
     this.elements.detailContent.innerHTML = `
-      <div class="detail-header">
-        <div>
-          <div class="detail-numero">${this.escapeHtml(orc.numeroOrcamento || "---")}</div>
-          <div class="detail-cliente-nome">${this.escapeHtml(c.nome || "Cliente não informado")}</div>
+      <div class="orcamento-doc-header">
+        <div class="orcamento-doc-header-left">
+          <img src="../frontEnd/img/logoAuxtrat.png" alt="Auxtrat" class="doc-logo" />
+          <div class="doc-company-info">
+            <div class="doc-company-name">${this.escapeHtml(cfg.nome || "Auxtrat Soluções em Saneamento Ambiental")}</div>
+            ${cfg.cnpj ? `<span class="doc-company-line">CNPJ: ${this.escapeHtml(InputMasks.formatarCpfCnpj(cfg.cnpj))}</span>` : ""}
+            ${cfgEnd.logradouro ? `<span class="doc-company-line">${this.escapeHtml(cfgEnd.logradouro)}${cfgEnd.numero ? ", " + this.escapeHtml(cfgEnd.numero) : ""}${cfgEnd.bairro ? " - " + this.escapeHtml(cfgEnd.bairro) : ""}${cfgEnd.cidade ? " - " + this.escapeHtml(cfgEnd.cidade) + (cfgEnd.estado ? "/" + this.escapeHtml(cfgEnd.estado) : "") : ""}${cfgEnd.cep ? " - CEP " + this.escapeHtml(InputMasks.formatarCep(cfgEnd.cep)) : ""}</span>` : ""}
+            ${cfg.telefone ? `<span class="doc-company-line">${this.escapeHtml(InputMasks.formatarTelefone(cfg.telefone))}</span>` : ""}
+            ${cfg.email ? `<span class="doc-company-line">${this.escapeHtml(cfg.email)}</span>` : ""}
+          </div>
         </div>
-        <span class="status-badge ${statusCls}">${rotulo}</span>
+        <div class="orcamento-doc-header-right">
+          <div class="doc-type">ORÇAMENTO</div>
+          <div class="doc-number">Nº ${this.escapeHtml(orc.numeroOrcamento || "---")}</div>
+          <div class="doc-meta">
+            ${dataCriacao ? `<div class="doc-meta-item"><span class="doc-meta-label">Emissão:</span><span class="doc-meta-value">${dataCriacao}</span></div>` : ""}
+            <div class="doc-meta-item"><span class="doc-meta-label">Validade:</span><span class="doc-meta-value">${validade} dias</span></div>
+            <div class="doc-meta-item"><span class="doc-meta-label">Vendedor:</span><span class="doc-meta-value">${this.escapeHtml(orc.vendedorNome || "N/I")}</span></div>
+          </div>
+          <span class="status-badge ${statusCls}">${rotulo}</span>
+        </div>
       </div>
 
       <div class="detail-section">
         <h3 class="detail-section-title">Informações do Cliente</h3>
         <div class="detail-info-grid">
+          <div class="detail-info-item">
+            <span class="detail-info-label">Nome</span>
+            <span class="detail-info-value">${this.escapeHtml(c.nome || "Cliente não informado")}</span>
+          </div>
           ${c.cpfCnpj ? `<div class="detail-info-item"><span class="detail-info-label">CPF/CNPJ</span><span class="detail-info-value">${this.escapeHtml(InputMasks.formatarCpfCnpj(c.cpfCnpj))}</span></div>` : ""}
           ${c.telefone ? `<div class="detail-info-item"><span class="detail-info-label">Telefone</span><span class="detail-info-value">${this.escapeHtml(InputMasks.formatarTelefone(c.telefone))}</span></div>` : ""}
           ${c.email ? `<div class="detail-info-item"><span class="detail-info-label">E-mail</span><span class="detail-info-value">${this.escapeHtml(c.email)}</span></div>` : ""}
           ${end.cidade ? `<div class="detail-info-item"><span class="detail-info-label">Cidade</span><span class="detail-info-value">${this.escapeHtml(end.cidade)}${end.estado ? "/" + this.escapeHtml(end.estado) : ""}</span></div>` : ""}
-        </div>
-      </div>
-
-      <div class="detail-section">
-        <h3 class="detail-section-title">Vendedor</h3>
-        <div class="detail-info-grid">
-          <div class="detail-info-item">
-            <span class="detail-info-label">Responsável</span>
-            <span class="detail-info-value">${this.escapeHtml(orc.vendedorNome || "N/I")}</span>
-          </div>
           ${orc.audit && orc.audit.criadoEm ? `
           <div class="detail-info-item">
             <span class="detail-info-label">Criado em</span>
-            <span class="detail-info-value">${new Date(orc.audit.criadoEm).toLocaleDateString("pt-BR")}</span>
+            <span class="detail-info-value">${dataCriacao}</span>
           </div>` : ""}
         </div>
       </div>
+
+      ${orc.descricao ? `
+      <div class="detail-section">
+        <h3 class="detail-section-title">Descrição</h3>
+        <div class="detail-descricao">${orc.descricao}</div>
+      </div>` : ""}
 
       <div class="detail-section">
         <h3 class="detail-section-title">Itens do Orçamento</h3>
@@ -756,6 +854,11 @@ const OrcamentosController = {
       <div class="detail-section">
         <h3 class="detail-section-title">Observações</h3>
         <div class="detail-observacoes">${this.escapeHtml(orc.observacoes)}</div>
+      </div>` : ""}
+
+      ${cfg.orcamento?.mensagemRodape ? `
+      <div class="detail-section">
+        <div class="detail-observacoes" style="text-align:center;color:var(--text-muted);font-size:0.8rem">${this.escapeHtml(cfg.orcamento.mensagemRodape)}</div>
       </div>` : ""}
     `;
 
