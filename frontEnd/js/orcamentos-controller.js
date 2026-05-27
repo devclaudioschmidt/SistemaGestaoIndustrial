@@ -181,7 +181,7 @@ const OrcamentosController = {
     this.elements.filterSearch.addEventListener("input", () => this.aplicarFiltros());
 
     this.elements.cardsContainer.addEventListener("click", (e) => {
-      const card = e.target.closest(".orcamento-card");
+      const card = e.target.closest(".orcamento-row");
       if (!card) return;
       const viewBtn = e.target.closest(".btn-view-card");
       const editBtn = e.target.closest(".btn-edit-card");
@@ -282,7 +282,7 @@ const OrcamentosController = {
     }
 
     this.elements.empty.style.display = "none";
-    this.elements.cardsContainer.style.display = "grid";
+    this.elements.cardsContainer.style.display = "flex";
 
     this.elements.cardsContainer.innerHTML = lista
       .map((orc) => this.criarCard(orc))
@@ -293,44 +293,25 @@ const OrcamentosController = {
     const statusCls = this.CLASSES_STATUS[orc.status] || "status-rascunho";
     const rotulo = this.ROTULOS_STATUS[orc.status] || orc.status;
     const nomeCliente = (orc.cliente && orc.cliente.nome) || "Cliente não informado";
-    const total = this.formatarMoeda(orc.valores ? orc.valores.total : 0);
-    const data = orc.audit && orc.audit.criadoEm
-      ? this.formatarData(orc.audit.criadoEm.toDate ? orc.audit.criadoEm.toDate() : new Date(orc.audit.criadoEm))
-      : "";
     const numero = orc.numeroOrcamento || "---";
 
     return `
-      <div class="orcamento-card" data-id="${this.escapeHtml(orc.id)}">
-        <div class="card-top">
-          <span class="card-numero">${this.escapeHtml(numero)}</span>
-          <span class="status-badge ${statusCls}">${rotulo}</span>
-        </div>
-        <div class="card-cliente">${this.escapeHtml(nomeCliente)}</div>
-        <div class="card-info">
-          <span class="card-info-item">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm6 12H6v-1c0-2 4-3.1 6-3.1s6 1.1 6 3.1v1z"/></svg>
-            ${this.escapeHtml(data)}
-          </span>
-          <span class="card-info-item">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-            ${orc.cliente && orc.cliente.cidade ? this.escapeHtml(orc.cliente.cidade) : ""}${orc.cliente && orc.cliente.estado ? "/" + this.escapeHtml(orc.cliente.estado) : ""}
-          </span>
-        </div>
-        <div class="card-footer">
-          <span class="card-total">${total}</span>
-          <div class="card-actions">
-            <button class="btn-action btn-view-card" data-id="${this.escapeHtml(orc.id)}" title="Visualizar">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-            </button>
-            <button class="btn-action btn-edit-card" data-id="${this.escapeHtml(orc.id)}" title="Editar">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-            </button>
-            ${this.usuarioPerfil && (this.usuarioPerfil.cargo === "gerente" || this.usuarioPerfil.cargo === "master") ? `
-            <button class="btn-action btn-delete-card" data-id="${this.escapeHtml(orc.id)}" title="Excluir">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-            </button>
-            ` : ""}
-          </div>
+      <div class="orcamento-row" data-id="${this.escapeHtml(orc.id)}">
+        <span class="row-numero">${this.escapeHtml(numero)}</span>
+        <span class="row-cliente">${this.escapeHtml(nomeCliente)}</span>
+        <span class="row-status"><span class="status-badge ${statusCls}">${rotulo}</span></span>
+        <div class="row-actions">
+          <button class="btn-action btn-view-card" data-id="${this.escapeHtml(orc.id)}" title="Visualizar">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          </button>
+          <button class="btn-action btn-edit-card" data-id="${this.escapeHtml(orc.id)}" title="Editar">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          ${this.usuarioPerfil && (this.usuarioPerfil.cargo === "gerente" || this.usuarioPerfil.cargo === "master") ? `
+          <button class="btn-action btn-delete-card" data-id="${this.escapeHtml(orc.id)}" title="Excluir">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+          ` : ""}
         </div>
       </div>
     `;

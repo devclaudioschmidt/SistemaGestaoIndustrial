@@ -122,95 +122,71 @@
 }
 
 /* ==========================================================================
-   LISTA DE ORÇAMENTOS (CARDS)
+   LISTA DE ORÇAMENTOS (LINHAS)
    ========================================================================== */
 .orcamentos-list {
   min-height: 200px;
 }
 
 .orcamentos-cards {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-.orcamento-card {
-  background: var(--surface-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-default);
-  padding: 20px;
-  transition: var(--transition-fast);
-  cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-default);
+  overflow: hidden;
 }
 
-.orcamento-card:hover {
-  box-shadow: var(--shadow-card);
-}
-
-.card-top {
+.orcamento-row {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface-color);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: var(--transition-fast);
 }
 
-.card-numero {
+.orcamento-row:last-child {
+  border-bottom: none;
+}
+
+.orcamento-row:hover {
+  background: var(--surface-hover);
+}
+
+.row-numero {
+  min-width: 140px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  font-family: monospace;
+}
+
+.row-cliente {
+  flex: 1;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--primary-color);
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.card-cliente {
-  font-size: 1rem;
-  font-weight: 500;
+.row-status {
+  flex-shrink: 0;
 }
 
-.card-info {
+.row-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  font-size: 0.8125rem;
-  color: var(--text-muted);
+  gap: 2px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
-.card-info-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.card-info-item svg {
-  width: 16px;
-  height: 16px;
-  opacity: 0.6;
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-color);
-}
-
-.card-total {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--secondary-color);
-}
-
-.card-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.card-actions .btn-action {
-  width: 32px;
-  height: 32px;
+.row-actions .btn-action {
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -222,12 +198,12 @@
   background: none;
 }
 
-.card-actions .btn-action:hover {
+.row-actions .btn-action:hover {
   background: var(--surface-hover);
   color: var(--text-main);
 }
 
-.card-actions .btn-delete-card:hover {
+.row-actions .btn-delete-card:hover {
   color: var(--border-error);
   background: rgba(217, 48, 37, 0.08);
 }
@@ -943,8 +919,8 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .orcamentos-cards {
-    grid-template-columns: repeat(2, 1fr);
+  .orcamento-row {
+    padding: 16px 20px;
   }
 }
 
@@ -961,9 +937,6 @@
   .app-footer {
     margin-left: 240px;
   }
-
-  .orcamentos-cards {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 
