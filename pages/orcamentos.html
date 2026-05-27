@@ -82,6 +82,12 @@
             <option value="em_producao">Em Produção</option>
           </select>
         </div>
+        <div class="filter-group">
+          <label for="filter-vendedor" class="filter-label">Vendedor</label>
+          <select id="filter-vendedor" class="input-field filter-select">
+            <option value="">Todos</option>
+          </select>
+        </div>
         <div class="filter-group filter-search-group">
           <label for="filter-search" class="filter-label">Buscar</label>
           <input type="text" id="filter-search" class="input-field" placeholder="Cliente, nº orçamento..." />
@@ -103,8 +109,19 @@
           <p class="text-muted">Nenhum orçamento encontrado.</p>
           <p class="text-muted">Clique em "Novo Orçamento" para criar o primeiro.</p>
         </div>
-        <!-- Cards (renderizados via JS) -->
-        <div id="orcamentos-cards" class="orcamentos-cards" style="display:none"></div>
+        <!-- Tabela de orçamentos (cabeçalho fixo + linhas via JS) -->
+        <table id="orcamentos-table" class="orcamentos-table" style="display:none">
+          <thead>
+            <tr class="list-header">
+              <th class="hdr-numero">Nº Orçamento</th>
+              <th class="hdr-cliente">Cliente</th>
+              <th class="hdr-vendedor">Vendedor</th>
+              <th class="hdr-status">Status</th>
+              <th class="hdr-acoes"></th>
+            </tr>
+          </thead>
+          <tbody id="orcamentos-tbody"></tbody>
+        </table>
       </div>
     </section>
     <!-- /view lista -->
@@ -385,6 +402,7 @@
   <script src="../backEnd/js/firebase-core.js"></script>
   <script src="../backEnd/js/auth-service.js"></script>
   <script src="../frontEnd/js/ui-controller.js"></script>
+  <script src="../frontEnd/js/masks.js"></script>
   <script src="../frontEnd/js/orcamentos-controller.js"></script>
 
 </body>

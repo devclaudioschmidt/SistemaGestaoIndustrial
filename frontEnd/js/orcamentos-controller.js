@@ -43,7 +43,14 @@ const OrcamentosController = {
   init() {
     this.cacheElements();
     this.bindEvents();
+    this.aplicarMascaras();
     this.verificarAutenticacao();
+  },
+
+  aplicarMascaras() {
+    InputMasks.aplicar(this.elements.clienteTelefone, "telefone");
+    InputMasks.aplicar(this.elements.clienteCpfCnpj, "cpf_cnpj");
+    InputMasks.aplicar(this.elements.clienteCep, "cep");
   },
 
   cacheElements() {
@@ -55,7 +62,8 @@ const OrcamentosController = {
       formView: document.getElementById("orcamentos-form-view"),
       detailView: document.getElementById("orcamentos-detail-view"),
 
-      cardsContainer: document.getElementById("orcamentos-cards"),
+      table: document.getElementById("orcamentos-table"),
+      tbody: document.getElementById("orcamentos-tbody"),
       loading: document.getElementById("orcamentos-loading"),
       empty: document.getElementById("orcamentos-empty"),
 
@@ -65,6 +73,7 @@ const OrcamentosController = {
 
       filterStatus: document.getElementById("filter-status"),
       filterSearch: document.getElementById("filter-search"),
+      filterVendedor: document.getElementById("filter-vendedor"),
 
       formTitle: document.getElementById("form-title"),
       orcamentoId: document.getElementById("orcamento-id"),
@@ -134,11 +143,12 @@ const OrcamentosController = {
 
     this.elements.acaoVisualizar.addEventListener("click", () => {
       this.fecharModalPosConclusao();
-      this.abrirDetalhe(this.ultimoOrcamentoSalvo);
+      this.mostrarLista();
     });
     this.elements.acaoEnviar.addEventListener("click", () => {
       this.fecharModalPosConclusao();
       this.enviarOrcamento(this.ultimoOrcamentoSalvo);
+      this.mostrarLista();
     });
     this.elements.acaoAnaliseCadastro.addEventListener("click", () => {
       this.fecharModalPosConclusao();
@@ -162,6 +172,13 @@ const OrcamentosController = {
         }
         return;
       }
+      const aprovarBtn = e.target.closest(".btn-detail-aprovar");
+      if (aprovarBtn) {
+        const id = this.elements.detailActions._orcId;
+        const orc = this.orcamentos.find((o) => o.id === id);
+        if (orc) this.aprovarOrcamento(orc);
+        return;
+      }
       const excluirBtn = e.target.closest(".btn-detail-excluir");
       if (excluirBtn) {
         const id = this.elements.detailActions._orcId;
@@ -179,13 +196,14 @@ const OrcamentosController = {
 
     this.elements.filterStatus.addEventListener("change", () => this.aplicarFiltros());
     this.elements.filterSearch.addEventListener("input", () => this.aplicarFiltros());
+    this.elements.filterVendedor.addEventListener("change", () => this.aplicarFiltros());
 
-    this.elements.cardsContainer.addEventListener("click", (e) => {
-      const card = e.target.closest(".orcamento-row");
-      if (!card) return;
+    this.elements.tbody.addEventListener("click", (e) => {
+      const row = e.target.closest(".orcamento-row");
+      if (!row) return;
       const viewBtn = e.target.closest(".btn-view-card");
       const editBtn = e.target.closest(".btn-edit-card");
-      const id = card.dataset.id;
+      const id = row.dataset.id;
 
       if (editBtn) {
         e.stopPropagation();
@@ -259,13 +277,18 @@ const OrcamentosController = {
     }
   },
 
-  renderizarCards(filtroStatus, filtroBusca) {
+  renderizarCards(filtroStatus, filtroBusca, filtroVendedor) {
     this.mostrarLoading(false);
+
+    this.popularFiltroVendedor();
 
     let lista = [...this.orcamentos];
 
     if (filtroStatus) {
       lista = lista.filter((o) => o.status === filtroStatus);
+    }
+    if (filtroVendedor) {
+      lista = lista.filter((o) => o.vendedorNome === filtroVendedor);
     }
     if (filtroBusca) {
       const termo = filtroBusca.toLowerCase();
@@ -277,15 +300,15 @@ const OrcamentosController = {
     }
 
     if (lista.length === 0) {
-      this.elements.cardsContainer.style.display = "none";
+      this.elements.table.style.display = "none";
       this.elements.empty.style.display = "flex";
       return;
     }
 
     this.elements.empty.style.display = "none";
-    this.elements.cardsContainer.style.display = "flex";
+    this.elements.table.style.display = "table";
 
-    this.elements.cardsContainer.innerHTML = lista
+    this.elements.tbody.innerHTML = lista
       .map((orc) => this.criarCard(orc))
       .join("");
   },
@@ -295,13 +318,15 @@ const OrcamentosController = {
     const rotulo = this.ROTULOS_STATUS[orc.status] || orc.status;
     const nomeCliente = (orc.cliente && orc.cliente.nome) || "Cliente não informado";
     const numero = orc.numeroOrcamento || "---";
+    const vendedorNome = orc.vendedorNome || "N/I";
 
     return `
-      <div class="orcamento-row" data-id="${this.escapeHtml(orc.id)}">
-        <span class="row-numero">${this.escapeHtml(numero)}</span>
-        <span class="row-cliente">${this.escapeHtml(nomeCliente)}</span>
-        <span class="row-status"><span class="status-badge ${statusCls}">${rotulo}</span></span>
-        <div class="row-actions">
+      <tr class="orcamento-row" data-id="${this.escapeHtml(orc.id)}">
+        <td class="row-numero">${this.escapeHtml(numero)}</td>
+        <td class="row-cliente">${this.escapeHtml(nomeCliente)}</td>
+        <td class="row-vendedor">${this.escapeHtml(vendedorNome)}</td>
+        <td class="row-status"><span class="status-badge ${statusCls}">${rotulo}</span></td>
+        <td class="row-actions">
           <button class="btn-action btn-view-card" data-id="${this.escapeHtml(orc.id)}" title="Visualizar">
             <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
           </button>
@@ -311,15 +336,32 @@ const OrcamentosController = {
           <button class="btn-action btn-delete-card" data-id="${this.escapeHtml(orc.id)}" title="Excluir">
             <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
           </button>
-        </div>
-      </div>
+        </td>
+      </tr>
     `;
+  },
+
+  popularFiltroVendedor() {
+    const select = this.elements.filterVendedor;
+    if (!select) return;
+    const vendedores = [
+      ...new Set(
+        this.orcamentos
+          .map((o) => o.vendedorNome)
+          .filter(Boolean)
+      ),
+    ].sort();
+    const valorAtual = select.value;
+    select.innerHTML = '<option value="">Todos</option>' +
+      vendedores.map((v) => `<option value="${this.escapeHtml(v)}">${this.escapeHtml(v)}</option>`).join("");
+    select.value = valorAtual;
   },
 
   aplicarFiltros() {
     const status = this.elements.filterStatus.value;
     const busca = this.elements.filterSearch.value.trim();
-    this.renderizarCards(status, busca);
+    const vendedor = this.elements.filterVendedor.value;
+    this.renderizarCards(status, busca, vendedor);
   },
 
   mostrarLista() {
@@ -367,8 +409,8 @@ const OrcamentosController = {
 
     const c = orc.cliente || {};
     this.elements.clienteNome.value = c.nome || "";
-    this.elements.clienteCpfCnpj.value = c.cpfCnpj || "";
-    this.elements.clienteTelefone.value = c.telefone || "";
+    this.elements.clienteCpfCnpj.value = InputMasks.formatarCpfCnpj(c.cpfCnpj || "");
+    this.elements.clienteTelefone.value = InputMasks.formatarTelefone(c.telefone || "");
     this.elements.clienteEmail.value = c.email || "";
     const end = c.endereco || {};
     this.elements.clienteLogradouro.value = end.logradouro || "";
@@ -377,7 +419,7 @@ const OrcamentosController = {
     this.elements.clienteBairro.value = end.bairro || "";
     this.elements.clienteCidade.value = end.cidade || "";
     this.elements.clienteEstado.value = end.estado || "";
-    this.elements.clienteCep.value = end.cep || "";
+    this.elements.clienteCep.value = InputMasks.formatarCep(end.cep || "");
     this.elements.observacoesInput.value = orc.observacoes || "";
 
     this.elements.descontoInput.value = (orc.valores && orc.valores.desconto) || 0;
@@ -457,8 +499,8 @@ const OrcamentosController = {
   coletarDadosForm() {
     const cliente = {
       nome: this.elements.clienteNome.value.trim(),
-      cpfCnpj: this.elements.clienteCpfCnpj.value.trim(),
-      telefone: this.elements.clienteTelefone.value.trim(),
+      cpfCnpj: this.elements.clienteCpfCnpj.value.replace(/\D/g, ""),
+      telefone: this.elements.clienteTelefone.value.replace(/\D/g, ""),
       email: this.elements.clienteEmail.value.trim(),
       endereco: {
         logradouro: this.elements.clienteLogradouro.value.trim(),
@@ -467,7 +509,7 @@ const OrcamentosController = {
         bairro: this.elements.clienteBairro.value.trim(),
         cidade: this.elements.clienteCidade.value.trim(),
         estado: this.elements.clienteEstado.value,
-        cep: this.elements.clienteCep.value.trim(),
+        cep: this.elements.clienteCep.value.replace(/\D/g, ""),
       },
     };
 
@@ -669,10 +711,25 @@ const OrcamentosController = {
       <div class="detail-section">
         <h3 class="detail-section-title">Informações do Cliente</h3>
         <div class="detail-info-grid">
-          ${c.cpfCnpj ? `<div class="detail-info-item"><span class="detail-info-label">CPF/CNPJ</span><span class="detail-info-value">${this.escapeHtml(c.cpfCnpj)}</span></div>` : ""}
-          ${c.telefone ? `<div class="detail-info-item"><span class="detail-info-label">Telefone</span><span class="detail-info-value">${this.escapeHtml(c.telefone)}</span></div>` : ""}
+          ${c.cpfCnpj ? `<div class="detail-info-item"><span class="detail-info-label">CPF/CNPJ</span><span class="detail-info-value">${this.escapeHtml(InputMasks.formatarCpfCnpj(c.cpfCnpj))}</span></div>` : ""}
+          ${c.telefone ? `<div class="detail-info-item"><span class="detail-info-label">Telefone</span><span class="detail-info-value">${this.escapeHtml(InputMasks.formatarTelefone(c.telefone))}</span></div>` : ""}
           ${c.email ? `<div class="detail-info-item"><span class="detail-info-label">E-mail</span><span class="detail-info-value">${this.escapeHtml(c.email)}</span></div>` : ""}
           ${end.cidade ? `<div class="detail-info-item"><span class="detail-info-label">Cidade</span><span class="detail-info-value">${this.escapeHtml(end.cidade)}${end.estado ? "/" + this.escapeHtml(end.estado) : ""}</span></div>` : ""}
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3 class="detail-section-title">Vendedor</h3>
+        <div class="detail-info-grid">
+          <div class="detail-info-item">
+            <span class="detail-info-label">Responsável</span>
+            <span class="detail-info-value">${this.escapeHtml(orc.vendedorNome || "N/I")}</span>
+          </div>
+          ${orc.audit && orc.audit.criadoEm ? `
+          <div class="detail-info-item">
+            <span class="detail-info-label">Criado em</span>
+            <span class="detail-info-value">${new Date(orc.audit.criadoEm).toLocaleDateString("pt-BR")}</span>
+          </div>` : ""}
         </div>
       </div>
 
@@ -715,6 +772,7 @@ const OrcamentosController = {
         <span class="status-badge ${analise.status === "aprovado" ? "status-aprovado" : "status-analise"}">
           ${analise.status === "aprovado" ? "Cliente Aprovado" : analise.status === "reprovado" ? "Cliente Reprovado" : "Aguardando Análise"}
         </span>
+        <button class="btn-primary btn-detail-aprovar" data-id="${this.escapeHtml(orc.id)}">Aprovar para Produção</button>
       `;
     }
     if (orc.status === this.STATUS.APROVADO || orc.status === this.STATUS.EM_PRODUCAO) {
@@ -736,6 +794,21 @@ const OrcamentosController = {
     try {
       await db.collection("orcamentos").doc(orc.id).update({
         status: this.STATUS.ANALISE_CADASTRO,
+        "audit.alteradoPor": auth.currentUser.uid,
+        "audit.alteradoEm": new Date().toISOString(),
+      });
+      await this.carregarOrcamentos();
+      this.mostrarLista();
+    } catch (error) {
+      //
+    }
+  },
+
+  async aprovarOrcamento(orc) {
+    if (!orc) return;
+    try {
+      await db.collection("orcamentos").doc(orc.id).update({
+        status: this.STATUS.APROVADO,
         "audit.alteradoPor": auth.currentUser.uid,
         "audit.alteradoEm": new Date().toISOString(),
       });
