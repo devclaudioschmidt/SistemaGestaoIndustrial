@@ -710,6 +710,7 @@ const OrcamentosController = {
       },
       vendedorId: usuario.uid,
       vendedorNome: this.usuarioPerfil.nome || "Vendedor",
+      vendedorTelefone: this.usuarioPerfil.telefone || "",
       audit: {
         criadoPor: usuario.uid,
         criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
@@ -806,7 +807,7 @@ const OrcamentosController = {
           <div class="doc-meta">
             ${dataCriacao ? `<div class="doc-meta-item"><span class="doc-meta-label">Emissão:</span><span class="doc-meta-value">${dataCriacao}</span></div>` : ""}
             <div class="doc-meta-item"><span class="doc-meta-label">Validade:</span><span class="doc-meta-value">${validade} dias</span></div>
-            <div class="doc-meta-item"><span class="doc-meta-label">Vendedor:</span><span class="doc-meta-value">${Utils.escapeHtml(orc.vendedorNome || "N/I")}</span></div>
+            <div class="doc-meta-item"><span class="doc-meta-label">Vendedor:</span><span class="doc-meta-value">${Utils.escapeHtml(orc.vendedorNome || "N/I")}${orc.vendedorTelefone ? ` - ${Utils.escapeHtml(InputMasks.formatarTelefone(orc.vendedorTelefone))}` : ""}</span></div>
           </div>
           <span class="status-badge ${this.CLASSES_STATUS[orc.status] || "status-rascunho"}">${this.ROTULOS_STATUS[orc.status] || orc.status}</span>
         </div>

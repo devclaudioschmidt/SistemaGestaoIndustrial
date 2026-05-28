@@ -57,9 +57,10 @@ const AuthService = {
    * @param {string} senha - Senha do usuário
    * @param {string} cargo - Cargo/função do usuário (uso informativo)
    * @param {string[]} [regras] - Array de regras de acesso (ex: ["modulo.dashboard", "modulo.orcamentos"])
+   * @param {string} [telefone] - Telefone do usuário
    * @returns {Promise<string>} UID do usuário criado
    */
-  async criarUsuario(nome, email, senha, cargo, regras) {
+  async criarUsuario(nome, email, senha, cargo, regras, telefone) {
     const response = await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
       {
@@ -87,6 +88,7 @@ const AuthService = {
       uid: uid,
       nome: nome,
       email: email,
+      telefone: telefone || "",
       cargo: cargo,
       regras: regras || ["modulo.dashboard"],
       ativo: true,

@@ -127,6 +127,15 @@
           <span id="email-error" class="field-error" role="alert"></span>
         </div>
 
+        <!-- Campo: Telefone -->
+        <div class="input-group">
+          <label for="usuario-telefone" class="input-label">Telefone</label>
+          <div class="input-wrapper">
+            <input type="tel" id="usuario-telefone" class="input-field" placeholder="(xx) xxxxx-xxxx" inputmode="numeric" />
+          </div>
+          <span id="telefone-error" class="field-error" role="alert"></span>
+        </div>
+
         <!-- Campo: Senha (com toggle de visibilidade e helper text na edição) -->
         <div class="input-group">
           <label for="usuario-senha" class="input-label">Senha</label>
@@ -224,6 +233,7 @@
   <script src="../frontEnd/js/auth-guard.js"></script>
   <script src="../frontEnd/js/utils.js"></script>
   <script src="../frontEnd/js/ui-controller.js"></script>
+  <script src="../frontEnd/js/masks.js"></script>
   <script src="../frontEnd/js/usuarios-controller.js"></script>
 
 </body>

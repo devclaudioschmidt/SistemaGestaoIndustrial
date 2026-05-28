@@ -32,6 +32,7 @@ const UsuariosController = {
   init() {
     this.cacheElements();
     this.bindEvents();
+    InputMasks.aplicar(this.elements.telefoneInput, "telefone");
     this.verificarAutenticacao();
   },
 
@@ -66,10 +67,12 @@ const UsuariosController = {
       nomeInput: document.getElementById("usuario-nome"),
       emailInput: document.getElementById("usuario-email"),
       senhaInput: document.getElementById("usuario-senha"),
+      telefoneInput: document.getElementById("usuario-telefone"),
       cargoSelect: document.getElementById("usuario-cargo"),
       nomeError: document.getElementById("nome-error"),
       emailError: document.getElementById("email-error"),
       senhaError: document.getElementById("senha-error"),
+      telefoneError: document.getElementById("telefone-error"),
       cargoError: document.getElementById("cargo-error"),
       senhaHelper: document.getElementById("senha-helper"),
 
@@ -384,6 +387,7 @@ const UsuariosController = {
     this.elements.nomeInput.value = usuario.nome || "";
     this.elements.emailInput.value = usuario.email || "";
     this.elements.senhaInput.value = "";
+    this.elements.telefoneInput.value = usuario.telefone || "";
     this.elements.cargoSelect.value = usuario.cargo || "";
     this.renderRegras(usuario.regras || ["modulo.dashboard"]);
 
@@ -509,6 +513,7 @@ const UsuariosController = {
     const nome = this.elements.nomeInput.value.trim();
     const email = this.elements.emailInput.value.trim();
     const senha = this.elements.senhaInput.value;
+    const telefone = this.elements.telefoneInput.value.replace(/\D/g, "");
     const cargo = this.elements.cargoSelect.value;
     const regras = this.getRegrasSelecionadas();
 
@@ -525,9 +530,9 @@ const UsuariosController = {
 
     try {
       if (uid) {
-        await AuthService.atualizarUsuario(uid, { nome, cargo, regras });
+        await AuthService.atualizarUsuario(uid, { nome, cargo, regras, telefone });
       } else {
-        await AuthService.criarUsuario(nome, email, senha, cargo, regras);
+        await AuthService.criarUsuario(nome, email, senha, cargo, regras, telefone);
       }
 
       this.fecharModal();
@@ -633,6 +638,7 @@ const UsuariosController = {
       { input: this.elements.nomeInput, error: this.elements.nomeError },
       { input: this.elements.emailInput, error: this.elements.emailError },
       { input: this.elements.senhaInput, error: this.elements.senhaError },
+      { input: this.elements.telefoneInput, error: this.elements.telefoneError },
       { input: this.elements.cargoSelect, error: this.elements.cargoError },
       { input: this.elements.regrasContainer, error: this.elements.regrasError },
     ].forEach(({ input, error }) => {
