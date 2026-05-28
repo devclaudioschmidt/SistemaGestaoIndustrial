@@ -199,7 +199,7 @@ const OrcamentosController = {
       if (aprovarBtn) {
         const id = this.elements.detailActions._orcId;
         const orc = this.orcamentos.find((o) => o.id === id);
-        if (orc) this.aprovarOrcamento(orc);
+        if (orc) this.aprovarOrcamento(orc, aprovarBtn);
         return;
       }
       const excluirBtn = e.target.closest(".btn-detail-excluir");
@@ -255,30 +255,12 @@ const OrcamentosController = {
   },
 
   verificarAutenticacao() {
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        window.location.href = "../index.html";
-        return;
-      }
-      try {
-        const perfil = await AuthService.getPerfilUsuario(user.uid);
-        if (!perfil || !perfil.ativo) {
-          await AuthService.logout();
-          window.location.href = "../index.html";
-          return;
-        }
-        if (!perfil.regras || !perfil.regras.includes("modulo.orcamentos")) {
-          window.location.href = "dashboard.html";
-          return;
-        }
-        this.usuarioPerfil = perfil;
-        UiController.renderSidebar(perfil.regras, "orcamentos");
-        this.elements.userInfo.textContent = `${perfil.email} | ${AuthService.ROTULOS_CARGO ? AuthService.ROTULOS_CARGO[perfil.cargo] || perfil.cargo : perfil.cargo}`;
-        await this.carregarConfigEmpresa();
-        this.carregarOrcamentos();
-      } catch (error) {
-        window.location.href = "../index.html";
-      }
+    AuthGuard.verificar("modulo.orcamentos", async (perfil) => {
+      this.usuarioPerfil = perfil;
+      UiController.renderSidebar(perfil.regras, "orcamentos");
+      this.elements.userInfo.textContent = `${perfil.email} | ${AuthService.ROTULOS_CARGO[perfil.cargo] || perfil.cargo}`;
+      await this.carregarConfigEmpresa();
+      this.carregarOrcamentos();
     });
   },
 
@@ -301,6 +283,7 @@ const OrcamentosController = {
       });
       this.renderizarCards();
     } catch (error) {
+      console.warn("[orcamentos] Erro ao carregar:", error);
       this.mostrarLoading(false);
     }
   },
@@ -310,6 +293,7 @@ const OrcamentosController = {
       const doc = await db.collection("_config").doc("empresa").get();
       this.configEmpresa = doc.exists ? doc.data() : null;
     } catch (error) {
+      console.warn("[orcamentos] Erro ao carregar config:", error);
       this.configEmpresa = null;
     }
   },
@@ -318,19 +302,33 @@ const OrcamentosController = {
     const anoAtual = new Date().getFullYear().toString();
     let maxSeq = 0;
     try {
-      const snapshot = await db.collection("orcamentos").get();
-      snapshot.forEach((d) => {
-        const orc = d.data();
-        if (orc.numeroOrcamento) {
-          const match = orc.numeroOrcamento.match(/ORC-(\d{4})-(\d{4})/);
-          if (match && match[1] === anoAtual) {
-            const seq = parseInt(match[2], 10);
-            if (seq > maxSeq) maxSeq = seq;
-          }
-        }
-      });
+      const prefixo = `ORC-${anoAtual}-`;
+      const snapshot = await db.collection("orcamentos")
+        .where("numeroOrcamento", ">=", prefixo)
+        .where("numeroOrcamento", "<", prefixo + "\uf8ff")
+        .orderBy("numeroOrcamento", "desc")
+        .limit(1)
+        .get();
+      if (!snapshot.empty) {
+        const ultimo = snapshot.docs[0].data().numeroOrcamento;
+        const seq = parseInt(ultimo.slice(-4), 10);
+        if (!isNaN(seq)) maxSeq = seq;
+      }
     } catch (e) {
-      /**/
+      // Fallback: sem índice composto, varre tudo
+      try {
+        const snapshot = await db.collection("orcamentos").get();
+        snapshot.forEach((d) => {
+          const orc = d.data();
+          if (orc.numeroOrcamento) {
+            const match = orc.numeroOrcamento.match(/ORC-(\d{4})-(\d{4})/);
+            if (match && match[1] === anoAtual) {
+              const seq = parseInt(match[2], 10);
+              if (seq > maxSeq) maxSeq = seq;
+            }
+          }
+        });
+      } catch (_) { /**/ }
     }
     return `ORC-${anoAtual}-${String(maxSeq + 1).padStart(4, "0")}`;
   },
@@ -379,19 +377,19 @@ const OrcamentosController = {
     const vendedorNome = orc.vendedorNome || "N/I";
 
     return `
-      <tr class="orcamento-row" data-id="${this.escapeHtml(orc.id)}">
-        <td class="row-numero">${this.escapeHtml(numero)}</td>
-        <td class="row-cliente">${this.escapeHtml(nomeCliente)}</td>
-        <td class="row-vendedor">${this.escapeHtml(vendedorNome)}</td>
+      <tr class="orcamento-row" data-id="${Utils.escapeHtml(orc.id)}">
+        <td class="row-numero">${Utils.escapeHtml(numero)}</td>
+        <td class="row-cliente">${Utils.escapeHtml(nomeCliente)}</td>
+        <td class="row-vendedor">${Utils.escapeHtml(vendedorNome)}</td>
         <td class="row-status"><span class="status-badge ${statusCls}">${rotulo}</span></td>
         <td class="row-actions">
-          <button class="btn-action btn-view-card" data-id="${this.escapeHtml(orc.id)}" title="Visualizar">
+          <button class="btn-action btn-view-card" data-id="${Utils.escapeHtml(orc.id)}" title="Visualizar">
             <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
           </button>
-          <button class="btn-action btn-edit-card" data-id="${this.escapeHtml(orc.id)}" title="Editar">
+          <button class="btn-action btn-edit-card" data-id="${Utils.escapeHtml(orc.id)}" title="Editar">
             <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
           </button>
-          <button class="btn-action btn-delete-card" data-id="${this.escapeHtml(orc.id)}" title="Excluir">
+          <button class="btn-action btn-delete-card" data-id="${Utils.escapeHtml(orc.id)}" title="Excluir">
             <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
           </button>
         </td>
@@ -399,15 +397,18 @@ const OrcamentosController = {
     `;
   },
 
-  popularFiltroVendedor() {
+  atualizarVisibilidadeFiltroVendedor() {
     const select = this.elements.filterVendedor;
     if (!select) return;
-
     const filtroGroup = select.closest(".filter-group");
     if (filtroGroup) {
       filtroGroup.style.display = this.podeVerTodos ? "" : "none";
     }
-    if (!this.podeVerTodos) return;
+  },
+
+  preencherOpcoesVendedor() {
+    const select = this.elements.filterVendedor;
+    if (!select || !this.podeVerTodos) return;
 
     const vendedores = [
       ...new Set(
@@ -418,8 +419,13 @@ const OrcamentosController = {
     ].sort();
     const valorAtual = select.value;
     select.innerHTML = '<option value="">Todos</option>' +
-      vendedores.map((v) => `<option value="${this.escapeHtml(v)}">${this.escapeHtml(v)}</option>`).join("");
+      vendedores.map((v) => `<option value="${Utils.escapeHtml(v)}">${Utils.escapeHtml(v)}</option>`).join("");
     select.value = valorAtual;
+  },
+
+  popularFiltroVendedor() {
+    this.atualizarVisibilidadeFiltroVendedor();
+    this.preencherOpcoesVendedor();
   },
 
   aplicarFiltros() {
@@ -516,10 +522,10 @@ const OrcamentosController = {
     const tr = document.createElement("tr");
     tr.dataset.index = index;
     tr.innerHTML = `
-      <td><input type="text" class="item-input item-desc" data-index="${index}" value="${this.escapeHtml(String(descricao))}" placeholder="Descrição do item" /></td>
+      <td><input type="text" class="item-input item-desc" data-index="${index}" value="${Utils.escapeHtml(String(descricao))}" placeholder="Descrição do item" /></td>
       <td><input type="number" class="item-input item-qtd" data-index="${index}" value="${quantidade}" min="1" step="1" /></td>
       <td><input type="number" class="item-input item-valor" data-index="${index}" value="${valorUnitario}" min="0" step="0.01" /></td>
-      <td class="item-subtotal" data-index="${index}">${this.formatarMoeda(subtotal)}</td>
+      <td class="item-subtotal" data-index="${index}">${Utils.formatarMoeda(subtotal)}</td>
       <td><button type="button" class="btn-remove-item" data-index="${index}" title="Remover item"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button></td>
     `;
 
@@ -540,7 +546,7 @@ const OrcamentosController = {
     const qtd = parseFloat(tr.querySelector(".item-qtd").value) || 0;
     const valor = parseFloat(tr.querySelector(".item-valor").value) || 0;
     const subtotal = qtd * valor;
-    tr.querySelector(".item-subtotal").textContent = this.formatarMoeda(subtotal);
+    tr.querySelector(".item-subtotal").textContent = Utils.formatarMoeda(subtotal);
     this.atualizarTotal();
   },
 
@@ -560,7 +566,7 @@ const OrcamentosController = {
     });
     const desconto = parseFloat(this.elements.descontoInput.value) || 0;
     const total = Math.max(0, subtotal - desconto);
-    this.elements.totalValor.textContent = this.formatarMoeda(total);
+    this.elements.totalValor.textContent = Utils.formatarMoeda(total);
   },
 
   coletarDadosForm() {
@@ -667,64 +673,72 @@ const OrcamentosController = {
     }, 6000);
   },
 
+  async atualizarOrcamento(id, dados, status, abrirModal) {
+    const usuario = auth.currentUser;
+    const updateData = {
+      ...dados,
+      status,
+      audit: {
+        alteradoPor: usuario.uid,
+        alteradoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      },
+    };
+
+    if (abrirModal) {
+      const docAtual = await db.collection("orcamentos").doc(id).get();
+      if (docAtual.exists && !docAtual.data().numeroOrcamento) {
+        updateData.numeroOrcamento = await this.gerarProximoNumero();
+      }
+    }
+
+    await db.collection("orcamentos").doc(id).update(updateData);
+  },
+
+  async criarOrcamento(dados, status, abrirModal) {
+    const usuario = auth.currentUser;
+    const numero = abrirModal ? await this.gerarProximoNumero() : null;
+
+    const orcData = {
+      ...(numero ? { numeroOrcamento: numero } : {}),
+      ...dados,
+      status,
+      analiseFinanceira: {
+        status: "pendente",
+        motivo: "",
+        analisadoPor: null,
+        analisadoEm: null,
+      },
+      vendedorId: usuario.uid,
+      vendedorNome: this.usuarioPerfil.nome || "Vendedor",
+      audit: {
+        criadoPor: usuario.uid,
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        alteradoPor: usuario.uid,
+        alteradoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      },
+    };
+
+    const docRef = await db.collection("orcamentos").add(orcData);
+    return docRef.id;
+  },
+
   async handleSalvar(status, abrirModal = false) {
     if (!this.validarFormulario()) return;
 
     const dados = this.coletarDadosForm();
     const id = this.elements.orcamentoId.value;
-    const usuario = auth.currentUser;
-    const agora = new Date().toISOString();
 
     this.setLoadingSave(true);
 
     try {
       if (id) {
-        const updateData = {
-          ...dados,
-          status,
-          audit: {
-            alteradoPor: usuario.uid,
-            alteradoEm: agora,
-          },
-        };
-
-        if (abrirModal) {
-          const docAtual = await db.collection("orcamentos").doc(id).get();
-          if (docAtual.exists && !docAtual.data().numeroOrcamento) {
-            updateData.numeroOrcamento = await this.gerarProximoNumero();
-          }
-        }
-
-        await db.collection("orcamentos").doc(id).update(updateData);
+        await this.atualizarOrcamento(id, dados, status, abrirModal);
       } else {
-        const numero = abrirModal ? await this.gerarProximoNumero() : null;
-
-        const orcData = {
-          ...(numero ? { numeroOrcamento: numero } : {}),
-          ...dados,
-          status,
-          analiseFinanceira: {
-            status: "pendente",
-            motivo: "",
-            analisadoPor: null,
-            analisadoEm: null,
-          },
-          vendedorId: usuario.uid,
-          vendedorNome: this.usuarioPerfil.nome || "Vendedor",
-          audit: {
-            criadoPor: usuario.uid,
-            criadoEm: agora,
-            alteradoPor: usuario.uid,
-            alteradoEm: agora,
-          },
-        };
-
-        const docRef = await db.collection("orcamentos").add(orcData);
-        this.elements.orcamentoId.value = docRef.id;
+        const novoId = await this.criarOrcamento(dados, status, abrirModal);
+        this.elements.orcamentoId.value = novoId;
       }
 
       await this.carregarOrcamentos();
-      this.setLoadingSave(false);
 
       if (abrirModal) {
         const orcAtualizado = this.orcamentos.find(
@@ -736,11 +750,12 @@ const OrcamentosController = {
         this.mostrarLista();
       }
     } catch (error) {
-      this.setLoadingSave(false);
       this.mostrarNotificacao(
         "Erro ao salvar: " + (error.message || "verifique sua conexão e tente novamente."),
         "error"
       );
+    } finally {
+      this.setLoadingSave(false);
     }
   },
 
@@ -752,57 +767,48 @@ const OrcamentosController = {
     this.elements.modalPosConclusao.classList.remove("is-open");
   },
 
-  async abrirDetalhe(orc) {
-    if (!orc) return;
-
-    this.elements.detailTitle.textContent = `Orçamento ${orc.numeroOrcamento || ""}`;
-    this.elements.detailSubtitle.textContent = `Cliente: ${(orc.cliente && orc.cliente.nome) || "N/I"}`;
-
+  renderDetailContent(orc) {
     const c = orc.cliente || {};
     const end = c.endereco || {};
-    const statusCls = this.CLASSES_STATUS[orc.status] || "status-rascunho";
-    const rotulo = this.ROTULOS_STATUS[orc.status] || orc.status;
-
-    const itensHtml = (orc.itens || [])
-      .map(
-        (item) => `
-      <tr>
-        <td>${this.escapeHtml(item.descricao)}</td>
-        <td>${item.quantidade}</td>
-        <td>${this.formatarMoeda(item.valorUnitario)}</td>
-        <td class="detail-valor-total">${this.formatarMoeda(item.subtotal)}</td>
-      </tr>`
-      )
-      .join("");
-
     const cfg = this.configEmpresa || {};
     const cfgEnd = cfg.endereco || {};
-    const dataCriacao = orc.audit?.criadoEm
-      ? new Date(orc.audit.criadoEm).toLocaleDateString("pt-BR")
+    const tsCriacao = orc.audit?.criadoEm;
+    const dataCriacao = tsCriacao
+      ? (tsCriacao.toDate ? tsCriacao.toDate() : new Date(tsCriacao)).toLocaleDateString("pt-BR")
       : "";
     const validade = cfg.orcamento?.validadePadrao || 30;
 
-    this.elements.detailContent.innerHTML = `
+    const itensHtml = (orc.itens || [])
+      .map((item) => `
+      <tr>
+        <td>${Utils.escapeHtml(item.descricao)}</td>
+        <td>${item.quantidade}</td>
+        <td>${Utils.formatarMoeda(item.valorUnitario)}</td>
+        <td class="detail-valor-total">${Utils.formatarMoeda(item.subtotal)}</td>
+      </tr>`)
+      .join("");
+
+    return `
       <div class="orcamento-doc-header">
         <div class="orcamento-doc-header-left">
           <img src="../frontEnd/img/logoAuxtrat.png" alt="Auxtrat" class="doc-logo" />
           <div class="doc-company-info">
-            <div class="doc-company-name">${this.escapeHtml(cfg.nome || "Auxtrat Soluções em Saneamento Ambiental")}</div>
-            ${cfg.cnpj ? `<span class="doc-company-line">CNPJ: ${this.escapeHtml(InputMasks.formatarCpfCnpj(cfg.cnpj))}</span>` : ""}
-            ${cfgEnd.logradouro ? `<span class="doc-company-line">${this.escapeHtml(cfgEnd.logradouro)}${cfgEnd.numero ? ", " + this.escapeHtml(cfgEnd.numero) : ""}${cfgEnd.bairro ? " - " + this.escapeHtml(cfgEnd.bairro) : ""}${cfgEnd.cidade ? " - " + this.escapeHtml(cfgEnd.cidade) + (cfgEnd.estado ? "/" + this.escapeHtml(cfgEnd.estado) : "") : ""}${cfgEnd.cep ? " - CEP " + this.escapeHtml(InputMasks.formatarCep(cfgEnd.cep)) : ""}</span>` : ""}
-            ${cfg.telefone ? `<span class="doc-company-line">${this.escapeHtml(InputMasks.formatarTelefone(cfg.telefone))}</span>` : ""}
-            ${cfg.email ? `<span class="doc-company-line">${this.escapeHtml(cfg.email)}</span>` : ""}
+            <div class="doc-company-name">${Utils.escapeHtml(cfg.nome || "Auxtrat Soluções em Saneamento Ambiental")}</div>
+            ${cfg.cnpj ? `<span class="doc-company-line">CNPJ: ${Utils.escapeHtml(InputMasks.formatarCpfCnpj(cfg.cnpj))}</span>` : ""}
+            ${cfgEnd.logradouro ? `<span class="doc-company-line">${Utils.escapeHtml(cfgEnd.logradouro)}${cfgEnd.numero ? ", " + Utils.escapeHtml(cfgEnd.numero) : ""}${cfgEnd.bairro ? " - " + Utils.escapeHtml(cfgEnd.bairro) : ""}${cfgEnd.cidade ? " - " + Utils.escapeHtml(cfgEnd.cidade) + (cfgEnd.estado ? "/" + Utils.escapeHtml(cfgEnd.estado) : "") : ""}${cfgEnd.cep ? " - CEP " + Utils.escapeHtml(InputMasks.formatarCep(cfgEnd.cep)) : ""}</span>` : ""}
+            ${cfg.telefone ? `<span class="doc-company-line">${Utils.escapeHtml(InputMasks.formatarTelefone(cfg.telefone))}</span>` : ""}
+            ${cfg.email ? `<span class="doc-company-line">${Utils.escapeHtml(cfg.email)}</span>` : ""}
           </div>
         </div>
         <div class="orcamento-doc-header-right">
           <div class="doc-type">ORÇAMENTO</div>
-          <div class="doc-number">Nº ${this.escapeHtml(orc.numeroOrcamento || "---")}</div>
+          <div class="doc-number">Nº ${Utils.escapeHtml(orc.numeroOrcamento || "---")}</div>
           <div class="doc-meta">
             ${dataCriacao ? `<div class="doc-meta-item"><span class="doc-meta-label">Emissão:</span><span class="doc-meta-value">${dataCriacao}</span></div>` : ""}
             <div class="doc-meta-item"><span class="doc-meta-label">Validade:</span><span class="doc-meta-value">${validade} dias</span></div>
-            <div class="doc-meta-item"><span class="doc-meta-label">Vendedor:</span><span class="doc-meta-value">${this.escapeHtml(orc.vendedorNome || "N/I")}</span></div>
+            <div class="doc-meta-item"><span class="doc-meta-label">Vendedor:</span><span class="doc-meta-value">${Utils.escapeHtml(orc.vendedorNome || "N/I")}</span></div>
           </div>
-          <span class="status-badge ${statusCls}">${rotulo}</span>
+          <span class="status-badge ${this.CLASSES_STATUS[orc.status] || "status-rascunho"}">${this.ROTULOS_STATUS[orc.status] || orc.status}</span>
         </div>
       </div>
 
@@ -811,12 +817,12 @@ const OrcamentosController = {
         <div class="detail-info-grid">
           <div class="detail-info-item">
             <span class="detail-info-label">Nome</span>
-            <span class="detail-info-value">${this.escapeHtml(c.nome || "Cliente não informado")}</span>
+            <span class="detail-info-value">${Utils.escapeHtml(c.nome || "Cliente não informado")}</span>
           </div>
-          ${c.cpfCnpj ? `<div class="detail-info-item"><span class="detail-info-label">CPF/CNPJ</span><span class="detail-info-value">${this.escapeHtml(InputMasks.formatarCpfCnpj(c.cpfCnpj))}</span></div>` : ""}
-          ${c.telefone ? `<div class="detail-info-item"><span class="detail-info-label">Telefone</span><span class="detail-info-value">${this.escapeHtml(InputMasks.formatarTelefone(c.telefone))}</span></div>` : ""}
-          ${c.email ? `<div class="detail-info-item"><span class="detail-info-label">E-mail</span><span class="detail-info-value">${this.escapeHtml(c.email)}</span></div>` : ""}
-          ${end.cidade ? `<div class="detail-info-item"><span class="detail-info-label">Cidade</span><span class="detail-info-value">${this.escapeHtml(end.cidade)}${end.estado ? "/" + this.escapeHtml(end.estado) : ""}</span></div>` : ""}
+          ${c.cpfCnpj ? `<div class="detail-info-item"><span class="detail-info-label">CPF/CNPJ</span><span class="detail-info-value">${Utils.escapeHtml(InputMasks.formatarCpfCnpj(c.cpfCnpj))}</span></div>` : ""}
+          ${c.telefone ? `<div class="detail-info-item"><span class="detail-info-label">Telefone</span><span class="detail-info-value">${Utils.escapeHtml(InputMasks.formatarTelefone(c.telefone))}</span></div>` : ""}
+          ${c.email ? `<div class="detail-info-item"><span class="detail-info-label">E-mail</span><span class="detail-info-value">${Utils.escapeHtml(c.email)}</span></div>` : ""}
+          ${end.cidade ? `<div class="detail-info-item"><span class="detail-info-label">Cidade</span><span class="detail-info-value">${Utils.escapeHtml(end.cidade)}${end.estado ? "/" + Utils.escapeHtml(end.estado) : ""}</span></div>` : ""}
           ${orc.audit && orc.audit.criadoEm ? `
           <div class="detail-info-item">
             <span class="detail-info-label">Criado em</span>
@@ -844,29 +850,37 @@ const OrcamentosController = {
           </thead>
           <tbody>${itensHtml}</tbody>
         </table>
-        <div style="margin-top:16px;text-align:right">
-          ${orc.valores && orc.valores.desconto > 0 ? `<p style="font-size:0.875rem;color:var(--text-muted)">Desconto: - ${this.formatarMoeda(orc.valores.desconto)}</p>` : ""}
-          <div class="detail-total">${this.formatarMoeda(orc.valores ? orc.valores.total : 0)}</div>
+        <div class="detail-total-wrapper">
+          ${orc.valores && orc.valores.desconto > 0 ? `<p class="detail-desconto">Desconto: - ${Utils.formatarMoeda(orc.valores.desconto)}</p>` : ""}
+          <div class="detail-total">${Utils.formatarMoeda(orc.valores ? orc.valores.total : 0)}</div>
         </div>
       </div>
 
       ${orc.observacoes ? `
       <div class="detail-section">
         <h3 class="detail-section-title">Observações</h3>
-        <div class="detail-observacoes">${this.escapeHtml(orc.observacoes)}</div>
+        <div class="detail-observacoes">${Utils.escapeHtml(orc.observacoes)}</div>
       </div>` : ""}
 
       ${cfg.orcamento?.mensagemRodape ? `
       <div class="detail-section">
-        <div class="detail-observacoes" style="text-align:center;color:var(--text-muted);font-size:0.8rem">${this.escapeHtml(cfg.orcamento.mensagemRodape)}</div>
+        <div class="detail-rodape">${Utils.escapeHtml(cfg.orcamento.mensagemRodape)}</div>
       </div>` : ""}
     `;
+  },
 
+  renderDetailActions(orc) {
     let actionsHtml = "";
     if (orc.status === this.STATUS.RASCUNHO) {
       actionsHtml = `
-        <button class="btn-primary btn-detail-editar" data-id="${this.escapeHtml(orc.id)}">Editar Orçamento</button>
-        <button class="btn-primary btn-detail-concluir" data-id="${this.escapeHtml(orc.id)}">Concluir</button>
+        <button class="btn-primary btn-detail-editar" data-id="${Utils.escapeHtml(orc.id)}">
+          <span class="spinner"></span>
+          <span class="btn-text">Editar Orçamento</span>
+        </button>
+        <button class="btn-primary btn-detail-concluir" data-id="${Utils.escapeHtml(orc.id)}">
+          <span class="spinner"></span>
+          <span class="btn-text">Concluir</span>
+        </button>
       `;
     }
     if (orc.status === this.STATUS.ANALISE_CADASTRO) {
@@ -875,16 +889,29 @@ const OrcamentosController = {
         <span class="status-badge ${analise.status === "aprovado" ? "status-aprovado" : "status-analise"}">
           ${analise.status === "aprovado" ? "Cliente Aprovado" : analise.status === "reprovado" ? "Cliente Reprovado" : "Aguardando Análise"}
         </span>
-        <button class="btn-primary btn-detail-aprovar" data-id="${this.escapeHtml(orc.id)}">Aprovar para Produção</button>
+        <button class="btn-primary btn-detail-aprovar" data-id="${Utils.escapeHtml(orc.id)}">
+          <span class="spinner"></span>
+          <span class="btn-text">Aprovar para Produção</span>
+        </button>
       `;
     }
     if (orc.status === this.STATUS.APROVADO || orc.status === this.STATUS.EM_PRODUCAO) {
-      actionsHtml = `<button class="btn-primary" onclick="window.print()">Imprimir</button>`;
+      actionsHtml = `<button class="btn-primary" onclick="window.print()"><span class="btn-text">Imprimir</span></button>`;
     }
 
-    actionsHtml += `<button class="btn-cancel btn-detail-excluir" data-id="${this.escapeHtml(orc.id)}">Excluir</button>`;
+    actionsHtml += `<button class="btn-cancel btn-detail-excluir" data-id="${Utils.escapeHtml(orc.id)}">Excluir</button>`;
+    return actionsHtml;
+  },
 
-    this.elements.detailActions.innerHTML = actionsHtml;
+  async abrirDetalhe(orc) {
+    if (!orc) return;
+
+    this.elements.detailTitle.textContent = `Orçamento ${orc.numeroOrcamento || ""}`;
+    this.elements.detailSubtitle.textContent = `Cliente: ${(orc.cliente && orc.cliente.nome) || "N/I"}`;
+
+    this.elements.detailContent.innerHTML = this.renderDetailContent(orc);
+
+    this.elements.detailActions.innerHTML = this.renderDetailActions(orc);
     this.elements.detailActions._orcId = orc.id;
 
     this.elements.listView.style.display = "none";
@@ -898,27 +925,39 @@ const OrcamentosController = {
       await db.collection("orcamentos").doc(orc.id).update({
         status: this.STATUS.ANALISE_CADASTRO,
         "audit.alteradoPor": auth.currentUser.uid,
-        "audit.alteradoEm": new Date().toISOString(),
+        "audit.alteradoEm": firebase.firestore.FieldValue.serverTimestamp(),
       });
       await this.carregarOrcamentos();
       this.mostrarLista();
     } catch (error) {
-      //
+      console.warn("[orcamentos] Erro ao solicitar análise:", error);
     }
   },
 
-  async aprovarOrcamento(orc) {
+  async aprovarOrcamento(orc, btnElement) {
     if (!orc) return;
+    if (btnElement) this.setLoadingDetail(btnElement, true);
     try {
       await db.collection("orcamentos").doc(orc.id).update({
         status: this.STATUS.APROVADO,
         "audit.alteradoPor": auth.currentUser.uid,
-        "audit.alteradoEm": new Date().toISOString(),
+        "audit.alteradoEm": firebase.firestore.FieldValue.serverTimestamp(),
       });
       await this.carregarOrcamentos();
       this.mostrarLista();
     } catch (error) {
-      //
+      console.warn("[orcamentos] Erro ao aprovar:", error);
+      if (btnElement) this.setLoadingDetail(btnElement, false);
+    }
+  },
+
+  setLoadingDetail(btnElement, loading) {
+    if (loading) {
+      btnElement.classList.add("is-loading");
+      btnElement.disabled = true;
+    } else {
+      btnElement.classList.remove("is-loading");
+      btnElement.disabled = false;
     }
   },
 
@@ -934,31 +973,24 @@ const OrcamentosController = {
     }
   },
 
-  confirmarExclusao(id) {
+  async confirmarExclusao(id) {
     const orc = this.orcamentos.find((o) => o.id === id);
     if (!orc) return;
     const nome = (orc.cliente && orc.cliente.nome) || "Cliente não informado";
-    this.elements.confirmTitle.textContent = "Excluir Orçamento";
-    this.elements.confirmMessage.innerHTML = `
-      Deseja realmente excluir permanentemente o orçamento
-      <strong>${this.escapeHtml(orc.numeroOrcamento || "---")}</strong>
-      de <strong>${this.escapeHtml(nome)}</strong>?
-      <br><br>Esta ação não pode ser desfeita.
-    `;
-    this.pendenteExclusao = id;
-    this.elements.confirmAction.querySelector(".btn-text").textContent = "Sim, Excluir";
-    this.elements.confirmAction.className = "btn-primary btn-danger";
-    this.elements.confirmModal.classList.add("is-open");
-  },
-
-  async excluirOrcamento(id) {
+    const confirmou = await this.mostrarConfirmacao(
+      "Excluir Orçamento",
+      `Deseja realmente excluir permanentemente o orçamento
+      <strong>${Utils.escapeHtml(orc.numeroOrcamento || "---")}</strong>
+      de <strong>${Utils.escapeHtml(nome)}</strong>?
+      <br><br>Esta ação não pode ser desfeita.`
+    );
+    if (!confirmou) return;
     try {
       await db.collection("orcamentos").doc(id).delete();
-      this.pendenteExclusao = null;
       await this.carregarOrcamentos();
       this.mostrarLista();
     } catch (error) {
-      this.pendenteExclusao = null;
+      console.warn("[orcamentos] Erro ao excluir:", error);
     }
   },
 
@@ -980,6 +1012,8 @@ const OrcamentosController = {
     return new Promise((resolve) => {
       this.elements.confirmTitle.textContent = titulo;
       this.elements.confirmMessage.innerHTML = mensagem;
+      this.elements.confirmAction.querySelector(".btn-text").textContent = "Confirmar";
+      this.elements.confirmAction.className = "btn-primary";
       this.elements.confirmModal.classList.add("is-open");
       this.confirmActionResolve = resolve;
     });
@@ -987,7 +1021,6 @@ const OrcamentosController = {
 
   fecharConfirmModal() {
     this.elements.confirmModal.classList.remove("is-open");
-    this.pendenteExclusao = null;
     if (this.confirmActionResolve) {
       this.confirmActionResolve(false);
       this.confirmActionResolve = null;
@@ -995,12 +1028,6 @@ const OrcamentosController = {
   },
 
   handleConfirmAction() {
-    if (this.pendenteExclusao) {
-      const id = this.pendenteExclusao;
-      this.fecharConfirmModal();
-      this.excluirOrcamento(id);
-      return;
-    }
     if (this.confirmActionResolve) {
       this.confirmActionResolve(true);
       this.confirmActionResolve = null;
@@ -1036,34 +1063,12 @@ const OrcamentosController = {
     });
   },
 
-  escapeHtml(texto) {
-    if (typeof texto !== "string") return texto;
-    const div = document.createElement("div");
-    div.textContent = texto;
-    return div.innerHTML;
-  },
-
-  formatarMoeda(valor) {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(valor || 0);
-  },
-
-  formatarData(data) {
-    if (!data) return "";
-    return new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(data);
-  },
-
   async handleLogout() {
     try {
       await AuthService.logout();
       window.location.href = "../index.html";
     } catch (error) {
+      console.warn("[orcamentos] Erro de autenticação:", error);
       window.location.href = "../index.html";
     }
   },

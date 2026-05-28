@@ -404,7 +404,7 @@ const LoginController = {
       form.innerHTML = `
         <div class="reset-success">
           <p class="reset-success-text">
-            Link de recuperação enviado para <strong>${this.escapeHtml(email)}</strong>.
+            Link de recuperação enviado para <strong>${Utils.escapeHtml(email)}</strong>.
           </p>
           <p class="reset-success-hint text-muted">
             Verifique sua caixa de entrada e spam. O link expira em 1 hora.
@@ -424,16 +424,6 @@ const LoginController = {
     }
   },
 
-  /**
-   * Escapa caracteres HTML para prevenir XSS.
-   * @param {string} texto
-   * @returns {string}
-   */
-  escapeHtml(texto) {
-    const div = document.createElement("div");
-    div.textContent = texto;
-    return div.innerHTML;
-  },
 };
 
 document.addEventListener("DOMContentLoaded", () => LoginController.init());

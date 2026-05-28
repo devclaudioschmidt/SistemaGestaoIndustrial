@@ -35,8 +35,10 @@ service cloud.firestore {
     match /orcamentos/{orcamentoId} {
       allow read: if request.auth != null && isRegraIn(["modulo.orcamentos"])
         && (isCargoIn(["master", "gerente", "financeiro"]) || resource.data.vendedorId == request.auth.uid);
-      allow create: if request.auth != null && isRegraIn(["modulo.orcamentos"]);
-      allow update: if request.auth != null && isRegraIn(["modulo.orcamentos"]);
+      allow create: if request.auth != null && isRegraIn(["modulo.orcamentos"])
+        && request.resource.data.audit.criadoPor == request.auth.uid;
+      allow update: if request.auth != null && isRegraIn(["modulo.orcamentos"])
+        && request.resource.data.audit.alteradoPor == request.auth.uid;
       allow delete: if request.auth != null && isRegraIn(["modulo.orcamentos"]);
     }
   }

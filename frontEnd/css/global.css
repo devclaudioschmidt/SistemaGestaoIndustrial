@@ -116,9 +116,8 @@ button {
   background: none;
 }
 
-ul,
-ol {
-  list-style: none;
+.btn-full {
+  width: 100%;
 }
 
 /* ==========================================================================
@@ -156,7 +155,6 @@ ol {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
 }
 
 .btn-primary:hover {

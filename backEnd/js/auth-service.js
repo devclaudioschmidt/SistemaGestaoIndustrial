@@ -10,6 +10,16 @@
  * =============================================================================
  */
 const AuthService = {
+  /** Mapa de rótulos legíveis dos cargos internos */
+  ROTULOS_CARGO: {
+    master: "Master",
+    gerente: "Gerente",
+    vendas: "Vendas",
+    compras: "Compras",
+    financeiro: "Financeiro",
+    operadores: "Operador",
+  },
+
   /**
    * Autentica o usuário com email e senha via Firebase Auth.
    * @param {string} email

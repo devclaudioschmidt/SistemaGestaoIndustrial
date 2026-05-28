@@ -78,30 +78,10 @@ const ConfiguracoesController = {
   },
 
   verificarAutenticacao() {
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        window.location.href = "../index.html";
-        return;
-      }
-
-      try {
-        const perfil = await AuthService.getPerfilUsuario(user.uid);
-        if (!perfil || !perfil.ativo) {
-          await AuthService.logout();
-          window.location.href = "../index.html";
-          return;
-        }
-        if (!perfil.regras || !perfil.regras.includes("modulo.configuracoes")) {
-          window.location.href = "dashboard.html";
-          return;
-        }
-
-        UiController.renderSidebar(perfil.regras, "configuracoes");
-        this.elements.userInfo.textContent = `${perfil.email} | Master`;
-        await this.carregarConfig();
-      } catch (error) {
-        window.location.href = "../index.html";
-      }
+    AuthGuard.verificar("modulo.configuracoes", async (perfil) => {
+      UiController.renderSidebar(perfil.regras, "configuracoes");
+      this.elements.userInfo.textContent = `${perfil.email} | ${AuthService.ROTULOS_CARGO[perfil.cargo] || perfil.cargo}`;
+      await this.carregarConfig();
     });
   },
 
@@ -259,18 +239,12 @@ const ConfiguracoesController = {
     }
   },
 
-  escapeHtml(texto) {
-    if (typeof texto !== "string") return texto;
-    const div = document.createElement("div");
-    div.textContent = texto;
-    return div.innerHTML;
-  },
-
   async handleLogout() {
     try {
       await AuthService.logout();
       window.location.href = "../index.html";
     } catch (error) {
+      console.warn("[config] Erro no logout:", error);
       window.location.href = "../index.html";
     }
   },
