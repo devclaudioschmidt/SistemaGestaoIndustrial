@@ -794,7 +794,7 @@ const OrcamentosController = {
           <img src="../frontEnd/img/logoAuxtrat.png" alt="Auxtrat" class="doc-logo" />
           <div class="doc-company-info">
             <div class="doc-company-name">${Utils.escapeHtml(cfg.nome || "Auxtrat Soluções em Saneamento Ambiental")}</div>
-            ${cfg.cnpj ? `<span class="doc-company-line">CNPJ: ${Utils.escapeHtml(InputMasks.formatarCpfCnpj(cfg.cnpj))}</span>` : ""}
+            ${cfg.cnpj ? `<span class="doc-company-line">CNPJ: ${Utils.escapeHtml(InputMasks.formatarCpfCnpj(cfg.cnpj))}${cfg.ie ? ` | IE: ${Utils.escapeHtml(cfg.ie)}` : ""}</span>` : ""}
             ${cfgEnd.logradouro ? `<span class="doc-company-line">${Utils.escapeHtml(cfgEnd.logradouro)}${cfgEnd.numero ? ", " + Utils.escapeHtml(cfgEnd.numero) : ""}${cfgEnd.bairro ? " - " + Utils.escapeHtml(cfgEnd.bairro) : ""}${cfgEnd.cidade ? " - " + Utils.escapeHtml(cfgEnd.cidade) + (cfgEnd.estado ? "/" + Utils.escapeHtml(cfgEnd.estado) : "") : ""}${cfgEnd.cep ? " - CEP " + Utils.escapeHtml(InputMasks.formatarCep(cfgEnd.cep)) : ""}</span>` : ""}
             ${cfg.telefone ? `<span class="doc-company-line">${Utils.escapeHtml(InputMasks.formatarTelefone(cfg.telefone))}</span>` : ""}
             ${cfg.email ? `<span class="doc-company-line">${Utils.escapeHtml(cfg.email)}</span>` : ""}

@@ -73,6 +73,7 @@ const UiController = {
     this.setupPasswordToggles();
     this.setupRippleEffect();
     this.setupSidebar();
+    this.setupLogoLink();
   },
 
   /**
@@ -222,6 +223,18 @@ const UiController = {
         sidebarOverlay.classList.remove("is-open");
         document.body.style.overflow = "";
       }
+    });
+  },
+  /**
+   * Torna o logo da topbar clicável, redirecionando para o Dashboard.
+   * Funciona em todas as páginas internas (pages/*.html).
+   */
+  setupLogoLink() {
+    const logo = document.querySelector(".topbar-logo");
+    if (!logo) return;
+    logo.addEventListener("click", () => {
+      const prefix = window.location.pathname.includes("/pages/") ? "" : "pages/";
+      window.location.href = prefix + "dashboard.html";
     });
   },
 };

@@ -264,6 +264,7 @@ button {
 .app-topbar .topbar-logo {
   height: 50px;
   width: auto;
+  cursor: pointer;
 }
 
 .app-topbar .topbar-app-name {

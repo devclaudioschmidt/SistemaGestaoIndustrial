@@ -282,17 +282,10 @@ const LoginController = {
   },
 
   /**
-   * Redireciona o usuário com base nas regras de acesso após login.
-   * Se tiver acesso a Usuários vai para o painel master,
-   * caso contrário vai para o Dashboard.
-   * @param {Object} perfil
+   * Redireciona o usuário para o Dashboard após login bem-sucedido.
    */
-  redirecionarPorCargo(perfil) {
-    if (perfil.regras && perfil.regras.includes("modulo.usuarios")) {
-      window.location.href = "pages/usuarios.html";
-    } else {
-      window.location.href = "pages/dashboard.html";
-    }
+  redirecionarParaDashboard() {
+    window.location.href = "pages/dashboard.html";
   },
 
   /**
@@ -356,7 +349,7 @@ const LoginController = {
       emailInput.classList.add("is-success");
 
       setTimeout(() => {
-        this.redirecionarPorCargo(perfil);
+        this.redirecionarParaDashboard();
       }, 1000);
     } catch (error) {
       console.error("[login] Erro completo:", { code: error.code, message: error.message });
