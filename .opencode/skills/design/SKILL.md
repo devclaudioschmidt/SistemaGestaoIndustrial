@@ -101,7 +101,7 @@ Telas grandes (Desktops): @media (min-width: 960px)
 Telas extra grandes: @media (min-width: 1280px)⚡ 
 
 ## 4. JavaScript Estruturado e Performance ##
-Zero bibliotecas: Sem jQuery ou frameworks.
+Utilize apenas bibliotecas em casos extremamente necessários. Priorize o Vanilla JS.
 Modularização: Agrupe funções por contexto em arquivos separados (ex: auth.js, ui.js) ou use classes organizadas.
 Manipulação de DOM Limpa: Use querySelector e querySelectorAll.
 Eventos Otimizados: Use delegação de eventos sempre que possível para evitar múltiplos listeners.

@@ -17,6 +17,11 @@ const OrcamentosController = {
   itemCounter: 0,
   configEmpresa: null,
 
+  /**
+   * Define se o usuário pode visualizar orçamentos de todos os vendedores.
+   * Apenas master, gerente e financeiro têm essa permissão.
+   * @returns {boolean}
+   */
   get podeVerTodos() {
     return ["master", "gerente", "financeiro"].includes(this.usuarioPerfil?.cargo);
   },
@@ -24,6 +29,7 @@ const OrcamentosController = {
   STATUS: {
     RASCUNHO: "rascunho",
     ANALISE_CADASTRO: "analise_cadastro",
+    PENDENTE_APROVACAO: "pendente_aprovacao",
     APROVADO: "aprovado",
     REPROVADO: "reprovado",
     EM_PRODUCAO: "em_producao",
@@ -32,6 +38,7 @@ const OrcamentosController = {
   ROTULOS_STATUS: {
     rascunho: "Rascunho",
     analise_cadastro: "Análise de Cadastro",
+    pendente_aprovacao: "Pendente de Aprovação",
     aprovado: "Aprovado",
     reprovado: "Reprovado",
     em_producao: "Em Produção",
@@ -40,11 +47,16 @@ const OrcamentosController = {
   CLASSES_STATUS: {
     rascunho: "status-rascunho",
     analise_cadastro: "status-analise",
+    pendente_aprovacao: "status-pendente",
     aprovado: "status-aprovado",
     reprovado: "status-reprovado",
     em_producao: "status-producao",
   },
 
+  /**
+   * Inicializa o controller: cacheia elementos, inicia o Quill,
+   * vincula eventos, aplica máscaras e verifica autenticação.
+   */
   init() {
     this.cacheElements();
     this.iniciarQuill();
@@ -53,6 +65,10 @@ const OrcamentosController = {
     this.verificarAutenticacao();
   },
 
+  /**
+   * Inicializa o editor de texto rico Quill no campo de descrição.
+   * Configura toolbar com negrito, itálico, listas, alinhamento e tamanho.
+   */
   iniciarQuill() {
     if (!this.elements.descricaoEditor) return;
     this.quill = new Quill("#descricao-editor", {
@@ -69,12 +85,20 @@ const OrcamentosController = {
     });
   },
 
+  /**
+   * Aplica máscaras de formatação nos campos do formulário:
+   * telefone, CPF/CNPJ e CEP.
+   */
   aplicarMascaras() {
     InputMasks.aplicar(this.elements.clienteTelefone, "telefone");
     InputMasks.aplicar(this.elements.clienteCpfCnpj, "cpf_cnpj");
     InputMasks.aplicar(this.elements.clienteCep, "cep");
   },
 
+  /**
+   * Cacheia todas as referências do DOM em this.elements para
+   * acesso rápido e centralizado em todo o controller.
+   */
   cacheElements() {
     this.elements = {
       userInfo: document.getElementById("user-info"),
@@ -134,6 +158,7 @@ const OrcamentosController = {
       acaoVisualizar: document.getElementById("acao-visualizar"),
       acaoEnviar: document.getElementById("acao-enviar"),
       acaoAnaliseCadastro: document.getElementById("acao-analise-cadastro"),
+      acaoPendente: document.getElementById("acao-pendente-aprovacao"),
 
       detailTitle: document.getElementById("detail-title"),
       detailSubtitle: document.getElementById("detail-subtitle"),
@@ -148,6 +173,15 @@ const OrcamentosController = {
     };
   },
 
+  /**
+   * Vincula todos os listeners de eventos da interface:
+   * - Botões fixos (logout, novo, voltar, salvar, concluir, adicionar item)
+   * - Delegação de eventos no detail actions (editar, concluir, aprovar, excluir)
+   * - Delegação na tabela (visualizar, editar, excluir)
+   * - Modais (fechar, confirmar)
+   * - Filtros e inputs
+   * - Tecla Escape para fechar modais
+   */
   bindEvents() {
     this.elements.logoutButton.addEventListener("click", () => this.handleLogout());
     this.elements.btnNovo.addEventListener("click", () => this.abrirFormularioNovo());
@@ -177,6 +211,10 @@ const OrcamentosController = {
       this.fecharModalPosConclusao();
       this.solicitarAnaliseCadastro(this.ultimoOrcamentoSalvo);
     });
+    this.elements.acaoPendente.addEventListener("click", () => {
+      this.fecharModalPosConclusao();
+      this.solicitarPendenteAprovacao(this.ultimoOrcamentoSalvo);
+    });
 
     this.elements.detailActions.addEventListener("click", (e) => {
       const editBtn = e.target.closest(".btn-detail-editar");
@@ -200,6 +238,22 @@ const OrcamentosController = {
         const id = this.elements.detailActions._orcId;
         const orc = this.orcamentos.find((o) => o.id === id);
         if (orc) this.aprovarOrcamento(orc, aprovarBtn);
+        return;
+      }
+      const imprimirBtn = e.target.closest(".btn-detail-imprimir");
+      if (imprimirBtn) {
+        const id = this.elements.detailActions._orcId;
+        const orc = this.orcamentos.find((o) => o.id === id);
+        if (orc) {
+          const numero = orc.numeroOrcamento || "ORC-0000";
+          const cliente = (orc.cliente && orc.cliente.nome) || "Cliente";
+          const tituloOriginal = document.title;
+          document.title = `${numero} - ${cliente}`;
+          window.print();
+          document.title = tituloOriginal;
+        } else {
+          window.print();
+        }
         return;
       }
       const excluirBtn = e.target.closest(".btn-detail-excluir");
@@ -254,6 +308,10 @@ const OrcamentosController = {
     });
   },
 
+  /**
+   * Verifica autenticação via AuthGuard, configura o perfil do usuário,
+   * renderiza a sidebar, carrega a config da empresa e os orçamentos.
+   */
   verificarAutenticacao() {
     AuthGuard.verificar("modulo.orcamentos", async (perfil) => {
       this.usuarioPerfil = perfil;
@@ -264,6 +322,11 @@ const OrcamentosController = {
     });
   },
 
+  /**
+   * Carrega a lista de orçamentos do Firestore.
+   * Se o usuário não for master/gerente/financeiro, filtra apenas os seus.
+   * Ordena por número de orçamento decrescente.
+   */
   async carregarOrcamentos() {
     this.mostrarLoading(true);
     try {
@@ -288,6 +351,10 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Carrega a configuração da empresa do Firestore (coleção _config/empresa)
+   * para uso no cabeçalho do detail view e geração do documento.
+   */
   async carregarConfigEmpresa() {
     try {
       const doc = await db.collection("_config").doc("empresa").get();
@@ -298,6 +365,11 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Gera o próximo número sequencial de orçamento no formato ORC-AAAA-NNNN.
+   * Primeiro tenta query indexada, com fallback para varredura total.
+   * @returns {string} Número formatado ex: "ORC-2026-0005"
+   */
   async gerarProximoNumero() {
     const anoAtual = new Date().getFullYear().toString();
     let maxSeq = 0;
@@ -333,6 +405,13 @@ const OrcamentosController = {
     return `ORC-${anoAtual}-${String(maxSeq + 1).padStart(4, "0")}`;
   },
 
+  /**
+   * Renderiza a tabela de orçamentos aplicando os filtros ativos.
+   * Atualiza o filtro de vendedor e exibe mensagem de vazio se necessário.
+   * @param {string} [filtroStatus] - Filtrar por status
+   * @param {string} [filtroBusca] - Filtrar por texto (número ou cliente)
+   * @param {string} [filtroVendedor] - Filtrar por nome do vendedor
+   */
   renderizarCards(filtroStatus, filtroBusca, filtroVendedor) {
     this.mostrarLoading(false);
 
@@ -369,6 +448,11 @@ const OrcamentosController = {
       .join("");
   },
 
+  /**
+   * Gera o HTML de uma linha da tabela (card) para um orçamento.
+   * @param {Object} orc - Dados do orçamento
+   * @returns {string} HTML da linha da tabela
+   */
   criarCard(orc) {
     const statusCls = this.CLASSES_STATUS[orc.status] || "status-rascunho";
     const rotulo = this.ROTULOS_STATUS[orc.status] || orc.status;
@@ -397,6 +481,10 @@ const OrcamentosController = {
     `;
   },
 
+  /**
+   * Mostra ou oculta o filtro de vendedor conforme a permissão do usuário.
+   * Apenas master, gerente e financeiro podem filtrar por vendedor.
+   */
   atualizarVisibilidadeFiltroVendedor() {
     const select = this.elements.filterVendedor;
     if (!select) return;
@@ -406,6 +494,10 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Preenche o select de filtro de vendedor com os nomes únicos
+   * extraídos da lista de orçamentos carregada.
+   */
   preencherOpcoesVendedor() {
     const select = this.elements.filterVendedor;
     if (!select || !this.podeVerTodos) return;
@@ -423,11 +515,18 @@ const OrcamentosController = {
     select.value = valorAtual;
   },
 
+  /**
+   * Atualiza o filtro de vendedor: visibilidade + opções.
+   * Método unificado chamado durante a renderização.
+   */
   popularFiltroVendedor() {
     this.atualizarVisibilidadeFiltroVendedor();
     this.preencherOpcoesVendedor();
   },
 
+  /**
+   * Aplica os filtros ativos (status, busca, vendedor) e re-renderiza a tabela.
+   */
   aplicarFiltros() {
     const status = this.elements.filterStatus.value;
     const busca = this.elements.filterSearch.value.trim();
@@ -435,6 +534,10 @@ const OrcamentosController = {
     this.renderizarCards(status, busca, vendedor);
   },
 
+  /**
+   * Exibe a view de lista e oculta as views de formulário e detalhe.
+   * Reaplica os filtros ao mostrar a lista.
+   */
   mostrarLista() {
     this.elements.listView.style.display = "flex";
     this.elements.formView.style.display = "none";
@@ -442,6 +545,10 @@ const OrcamentosController = {
     this.aplicarFiltros();
   },
 
+  /**
+   * Abre o formulário no modo "Novo Orçamento".
+   * Reseta todos os campos, limpa itens e foca no nome do cliente.
+   */
   abrirFormularioNovo() {
     this.orcamentoEditando = null;
     this.elements.formTitle.textContent = "Novo Orçamento";
@@ -463,6 +570,9 @@ const OrcamentosController = {
     setTimeout(() => this.elements.clienteNome.focus(), 100);
   },
 
+  /**
+   * Oculta e reseta a notificação do formulário.
+   */
   limparNotificacao() {
     const el = this.elements.formNotification;
     if (el) {
@@ -471,6 +581,11 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Abre o formulário no modo "Editar Orçamento" preenchendo
+   * todos os campos com os dados existentes do orçamento.
+   * @param {string} id - ID do documento do orçamento
+   */
   abrirFormularioEditar(id) {
     const orc = this.orcamentos.find((o) => o.id === id);
     if (!orc) return;
@@ -512,6 +627,11 @@ const OrcamentosController = {
     this.elements.detailView.style.display = "none";
   },
 
+  /**
+   * Adiciona uma linha de item na tabela de itens do formulário.
+   * Se um objeto item for passado, preenche os campos com seus valores.
+   * @param {Object} [item] - Dados do item para preenchimento (opcional)
+   */
   adicionarLinhaItem(item) {
     const index = this.itemCounter++;
     const descricao = (item && item.descricao) || "";
@@ -540,6 +660,10 @@ const OrcamentosController = {
     this.elements.itensTbody.appendChild(tr);
   },
 
+  /**
+   * Recalcula o subtotal de uma linha de item e atualiza o total geral.
+   * @param {number} index - Índice da linha a recalcular
+   */
   recalcularLinha(index) {
     const tr = this.elements.itensTbody.querySelector(`tr[data-index="${index}"]`);
     if (!tr) return;
@@ -550,12 +674,21 @@ const OrcamentosController = {
     this.atualizarTotal();
   },
 
+  /**
+   * Remove uma linha de item da tabela (mínimo de 1 linha mantido).
+   * @param {number} index - Índice da linha
+   * @param {HTMLElement} tr - Elemento TR a ser removido
+   */
   removerLinhaItem(index, tr) {
     if (this.elements.itensTbody.children.length <= 1) return;
     tr.remove();
     this.atualizarTotal();
   },
 
+  /**
+   * Calcula e exibe o total do orçamento (soma dos subtotais - desconto).
+   * Garante que o total nunca seja negativo.
+   */
   atualizarTotal() {
     const linhas = this.elements.itensTbody.querySelectorAll("tr");
     let subtotal = 0;
@@ -569,6 +702,11 @@ const OrcamentosController = {
     this.elements.totalValor.textContent = Utils.formatarMoeda(total);
   },
 
+  /**
+   * Coleta e estrutura todos os dados do formulário para salvar.
+   * Remove formatação de máscaras, processa itens e rich text.
+   * @returns {Object} Dados estruturados do orçamento
+   */
   coletarDadosForm() {
     const cliente = {
       nome: this.elements.clienteNome.value.trim(),
@@ -615,6 +753,11 @@ const OrcamentosController = {
     };
   },
 
+  /**
+   * Valida os campos obrigatórios do formulário:
+   * nome do cliente e ao menos um item com descrição.
+   * @returns {boolean} true se válido
+   */
   validarFormulario() {
     let valido = true;
     this.limparErrosForm();
@@ -649,6 +792,9 @@ const OrcamentosController = {
     return valido;
   },
 
+  /**
+   * Rola a página suavemente até o primeiro campo com erro.
+   */
   scrollToFirstError() {
     const firstError = document.querySelector(".is-error");
     if (firstError) {
@@ -657,6 +803,11 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Exibe notificação no topo do formulário com auto-hide em 6s.
+   * @param {string} mensagem - Texto da notificação
+   * @param {"error"|"success"} tipo - Tipo visual
+   */
   mostrarNotificacao(mensagem, tipo) {
     const el = this.elements.formNotification;
     if (!el) return;
@@ -673,6 +824,15 @@ const OrcamentosController = {
     }, 6000);
   },
 
+  /**
+   * Atualiza um orçamento existente no Firestore.
+   * Se abrirModal estiver ativo e o orçamento não tiver número, gera um.
+   * Inclui audit trail (alteradoPor, alteradoEm).
+   * @param {string} id - ID do documento
+   * @param {Object} dados - Dados do formulário
+   * @param {string} status - Novo status
+   * @param {boolean} abrirModal - Se vai abrir modal pós-conclusão
+   */
   async atualizarOrcamento(id, dados, status, abrirModal) {
     const usuario = auth.currentUser;
     const updateData = {
@@ -694,6 +854,14 @@ const OrcamentosController = {
     await db.collection("orcamentos").doc(id).update(updateData);
   },
 
+  /**
+   * Cria um novo orçamento no Firestore com dados do formulário,
+   * metadados do vendedor e audit trail completo.
+   * @param {Object} dados - Dados do formulário
+   * @param {string} status - Status inicial
+   * @param {boolean} abrirModal - Se gera número sequencial
+   * @returns {Promise<string>} ID do documento criado
+   */
   async criarOrcamento(dados, status, abrirModal) {
     const usuario = auth.currentUser;
     const numero = abrirModal ? await this.gerarProximoNumero() : null;
@@ -723,6 +891,12 @@ const OrcamentosController = {
     return docRef.id;
   },
 
+  /**
+   * Valida, coleta dados e persiste o orçamento (criação ou atualização).
+   * Após salvar, recarrega a lista e opcionalmente abre o modal pós-conclusão.
+   * @param {string} status - Status a aplicar
+   * @param {boolean} [abrirModal=false] - Se deve abrir modal pós-conclusão
+   */
   async handleSalvar(status, abrirModal = false) {
     if (!this.validarFormulario()) return;
 
@@ -760,14 +934,27 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Abre o modal de pós-conclusão do orçamento.
+   */
   abrirModalPosConclusao() {
     this.elements.modalPosConclusao.classList.add("is-open");
   },
 
+  /**
+   * Fecha o modal de pós-conclusão.
+   */
   fecharModalPosConclusao() {
     this.elements.modalPosConclusao.classList.remove("is-open");
   },
 
+  /**
+   * Gera o HTML completo do detail view do orçamento.
+   * Inclui cabeçalho (empresa + orçamento), dados do cliente,
+   * descrição, tabela de itens, totais, observações e rodapé.
+   * @param {Object} orc - Dados do orçamento
+   * @returns {string} HTML do conteúdo do detalhe
+   */
   renderDetailContent(orc) {
     const c = orc.cliente || {};
     const end = c.endereco || {};
@@ -870,7 +1057,14 @@ const OrcamentosController = {
     `;
   },
 
+  /**
+   * Gera os botões de ação do detail view conforme o status do orçamento.
+   * Botões variam por status: Editar/Concluir, Aprovar, Imprimir e Excluir.
+   * @param {Object} orc - Dados do orçamento
+   * @returns {string} HTML dos botões de ação
+   */
   renderDetailActions(orc) {
+    const imprimirHtml = `<button class="btn-primary btn-detail-imprimir"><span class="btn-text">Imprimir</span></button>`;
     let actionsHtml = "";
     if (orc.status === this.STATUS.RASCUNHO) {
       actionsHtml = `
@@ -882,6 +1076,7 @@ const OrcamentosController = {
           <span class="spinner"></span>
           <span class="btn-text">Concluir</span>
         </button>
+        ${imprimirHtml}
       `;
     }
     if (orc.status === this.STATUS.ANALISE_CADASTRO) {
@@ -894,16 +1089,32 @@ const OrcamentosController = {
           <span class="spinner"></span>
           <span class="btn-text">Aprovar para Produção</span>
         </button>
+        ${imprimirHtml}
+      `;
+    }
+    if (orc.status === this.STATUS.PENDENTE_APROVACAO) {
+      actionsHtml = `
+        <span class="status-badge status-pendente">Pendente de Aprovação</span>
+        <button class="btn-primary btn-detail-aprovar" data-id="${Utils.escapeHtml(orc.id)}">
+          <span class="spinner"></span>
+          <span class="btn-text">Aprovar para Produção</span>
+        </button>
+        ${imprimirHtml}
       `;
     }
     if (orc.status === this.STATUS.APROVADO || orc.status === this.STATUS.EM_PRODUCAO) {
-      actionsHtml = `<button class="btn-primary" onclick="window.print()"><span class="btn-text">Imprimir</span></button>`;
+      actionsHtml = imprimirHtml;
     }
 
     actionsHtml += `<button class="btn-cancel btn-detail-excluir" data-id="${Utils.escapeHtml(orc.id)}">Excluir</button>`;
     return actionsHtml;
   },
 
+  /**
+   * Abre a view de detalhamento de um orçamento.
+   * Renderiza o conteúdo e as ações, alternando da lista para o detail.
+   * @param {Object} orc - Dados do orçamento
+   */
   async abrirDetalhe(orc) {
     if (!orc) return;
 
@@ -920,6 +1131,10 @@ const OrcamentosController = {
     this.elements.detailView.style.display = "flex";
   },
 
+  /**
+   * Solicita análise de cadastro para um orçamento (status → analise_cadastro).
+   * @param {Object} orc - Dados do orçamento
+   */
   async solicitarAnaliseCadastro(orc) {
     if (!orc) return;
     try {
@@ -935,6 +1150,31 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Altera o status para pendente de aprovação (pula análise de cadastro).
+   * @param {Object} orc - Dados do orçamento
+   */
+  async solicitarPendenteAprovacao(orc) {
+    if (!orc) return;
+    try {
+      await db.collection("orcamentos").doc(orc.id).update({
+        status: this.STATUS.PENDENTE_APROVACAO,
+        "audit.alteradoPor": auth.currentUser.uid,
+        "audit.alteradoEm": firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      await this.carregarOrcamentos();
+      this.mostrarLista();
+    } catch (error) {
+      console.warn("[orcamentos] Erro ao solicitar pendente aprovação:", error);
+    }
+  },
+
+  /**
+   * Aprova um orçamento (status → aprovado) com audit trail.
+   * Controla loading no botão durante a operação.
+   * @param {Object} orc - Dados do orçamento
+   * @param {HTMLElement} [btnElement] - Botão para controle de loading
+   */
   async aprovarOrcamento(orc, btnElement) {
     if (!orc) return;
     if (btnElement) this.setLoadingDetail(btnElement, true);
@@ -952,6 +1192,11 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Controla o estado de loading de um botão no detail view.
+   * @param {HTMLElement} btnElement - Botão alvo
+   * @param {boolean} loading - true para ativar, false para desativar
+   */
   setLoadingDetail(btnElement, loading) {
     if (loading) {
       btnElement.classList.add("is-loading");
@@ -962,6 +1207,11 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Compartilha o orçamento via Web Share API se disponível,
+   * ou copia o texto para a área de transferência.
+   * @param {Object} orc - Dados do orçamento
+   */
   enviarOrcamento(orc) {
     if (!orc) return;
     const numero = orc.numeroOrcamento || "Orçamento";
@@ -974,6 +1224,11 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Exibe o modal de confirmação e, se confirmado, exclui o orçamento
+   * do Firestore. Recarrega a lista após exclusão.
+   * @param {string} id - ID do documento do orçamento
+   */
   async confirmarExclusao(id) {
     const orc = this.orcamentos.find((o) => o.id === id);
     if (!orc) return;
@@ -995,6 +1250,10 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Controla o estado de loading dos botões de salvar (rascunho e concluir).
+   * @param {boolean} loading - true para ativar, false para desativar
+   */
   setLoadingSave(loading) {
     [this.elements.btnSalvarRascunho, this.elements.btnConcluir].forEach((btn) => {
       if (loading) {
@@ -1020,6 +1279,9 @@ const OrcamentosController = {
     });
   },
 
+  /**
+   * Fecha o modal de confirmação e rejeita a promise pendente (resolve false).
+   */
   fecharConfirmModal() {
     this.elements.confirmModal.classList.remove("is-open");
     if (this.confirmActionResolve) {
@@ -1028,6 +1290,9 @@ const OrcamentosController = {
     }
   },
 
+  /**
+   * Executa a ação confirmada (resolve a promise com true) e fecha o modal.
+   */
   handleConfirmAction() {
     if (this.confirmActionResolve) {
       this.confirmActionResolve(true);
@@ -1036,21 +1301,39 @@ const OrcamentosController = {
     this.fecharConfirmModal();
   },
 
+  /**
+   * Mostra ou oculta o spinner de carregamento da lista de orçamentos.
+   * @param {boolean} visivel - true para exibir, false para ocultar
+   */
   mostrarLoading(visivel) {
     this.elements.loading.style.display = visivel ? "flex" : "none";
   },
 
+  /**
+   * Marca um campo do formulário como inválido e exibe a mensagem de erro.
+   * @param {HTMLElement} input - Campo com erro
+   * @param {HTMLElement} errorElement - Elemento de exibição da mensagem
+   * @param {string} message - Texto do erro
+   */
   showFieldError(input, errorElement, message) {
     input.classList.add("is-error");
     errorElement.textContent = message;
     errorElement.classList.add("is-visible");
   },
 
+  /**
+   * Remove a marcação de erro de um campo e oculta a mensagem.
+   * @param {HTMLElement} input - Campo a limpar
+   * @param {HTMLElement} errorElement - Elemento de erro a ocultar
+   */
   clearFieldError(input, errorElement) {
     input.classList.remove("is-error");
     errorElement.classList.remove("is-visible");
   },
 
+  /**
+   * Limpa todos os erros visuais do formulário (inputs e mensagens).
+   */
   limparErrosForm() {
     [
       { input: this.elements.clienteNome, error: this.elements.clienteNomeError },
@@ -1064,6 +1347,9 @@ const OrcamentosController = {
     });
   },
 
+  /**
+   * Desconecta o usuário via AuthService e redireciona para o login.
+   */
   async handleLogout() {
     try {
       await AuthService.logout();

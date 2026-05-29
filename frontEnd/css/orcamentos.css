@@ -301,6 +301,14 @@
   background: var(--border-error);
 }
 
+.status-pendente {
+  background: #e8f0fe;
+  color: #1a73e8;
+}
+.status-pendente::before {
+  background: #1a73e8;
+}
+
 .status-producao {
   background: #e8f0fe;
   color: #1a73e8;

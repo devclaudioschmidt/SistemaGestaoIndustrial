@@ -25,12 +25,20 @@ const ConfiguracoesController = {
     this.verificarAutenticacao();
   },
 
+  /**
+   * Aplica máscaras de formatação nos campos de CNPJ, telefone e CEP.
+   * Reutiliza o InputMasks já definido em masks.js.
+   */
   aplicarMascaras() {
     InputMasks.aplicar(this.elements.cnpj, "cpf_cnpj");
     InputMasks.aplicar(this.elements.telefone, "telefone");
     InputMasks.aplicar(this.elements.cep, "cep");
   },
 
+  /**
+   * Cacheia todas as referências do DOM em this.elements para
+   * acesso rápido e centralizado, evitando consultas repetitivas.
+   */
   cacheElements() {
     this.elements = {
       userInfo: document.getElementById("user-info"),
@@ -65,6 +73,11 @@ const ConfiguracoesController = {
     };
   },
 
+  /**
+   * Vincula os listeners de eventos da interface:
+   * - Logout, salvar formulário
+   * - Input no campo nome para limpar erro em tempo real
+   */
   bindEvents() {
     this.elements.logoutButton.addEventListener("click", () => this.handleLogout());
     this.elements.btnSalvar.addEventListener("click", () => this.handleSalvar());
@@ -77,6 +90,10 @@ const ConfiguracoesController = {
     });
   },
 
+  /**
+   * Verifica autenticação via AuthGuard e carrega a configuração
+   * se o usuário tiver permissão de acesso ao módulo.
+   */
   verificarAutenticacao() {
     AuthGuard.verificar("modulo.configuracoes", async (perfil) => {
       UiController.renderSidebar(perfil.regras, "configuracoes");
@@ -85,6 +102,11 @@ const ConfiguracoesController = {
     });
   },
 
+  /**
+   * Carrega os dados da empresa do Firestore (coleção _config/empresa)
+   * e preenche todos os campos do formulário com valores formatados.
+   * Se o documento não existir, mantém o formulário vazio.
+   */
   async carregarConfig() {
     try {
       const doc = await db.collection("_config").doc(this.DOC_CONFIG).get();
@@ -119,6 +141,11 @@ const ConfiguracoesController = {
     }
   },
 
+  /**
+   * Coleta e limpa os dados do formulário para salvar no Firestore.
+   * Remove formatação (pontuação) dos campos de CNPJ, telefone e CEP.
+   * @returns {Object} Dados estruturados da empresa
+   */
   coletarDados() {
     return {
       nome: this.elements.nome.value.trim(),
@@ -145,6 +172,11 @@ const ConfiguracoesController = {
     };
   },
 
+  /**
+   * Valida os campos obrigatórios do formulário.
+   * Atualmente valida apenas o nome (razão social).
+   * @returns {boolean} true se o formulário é válido
+   */
   validarFormulario() {
     let valido = true;
     this.clearFieldError(this.elements.nome, this.elements.nomeError);
@@ -157,6 +189,11 @@ const ConfiguracoesController = {
     return valido;
   },
 
+  /**
+   * Valida e persiste os dados da configuração no Firestore.
+   * Cria o documento _config/empresa se não existir, ou atualiza se existir.
+   * Inclui metadados de auditoria (criadoPor/alteradoPor).
+   */
   async handleSalvar() {
     if (!this.validarFormulario()) return;
 
@@ -198,6 +235,10 @@ const ConfiguracoesController = {
     }
   },
 
+  /**
+   * Controla o estado de loading do botão de salvar.
+   * @param {boolean} loading - true para ativar loading, false para desativar
+   */
   setLoadingSave(loading) {
     const btn = this.elements.btnSalvar;
     if (loading) {
@@ -209,6 +250,12 @@ const ConfiguracoesController = {
     }
   },
 
+  /**
+   * Exibe uma notificação temporária no topo do formulário.
+   * Desaparece automaticamente após 5 segundos.
+   * @param {string} mensagem - Texto da notificação
+   * @param {"success"|"error"} tipo - Tipo visual da notificação
+   */
   mostrarNotificacao(mensagem, tipo) {
     const el = this.elements.notification;
     if (!el) return;
@@ -225,12 +272,23 @@ const ConfiguracoesController = {
     }, 5000);
   },
 
+  /**
+   * Marca um campo como inválido e exibe a mensagem de erro.
+   * @param {HTMLElement} input - Campo com erro
+   * @param {HTMLElement} errorElement - Elemento que exibe a mensagem
+   * @param {string} message - Texto do erro
+   */
   showFieldError(input, errorElement, message) {
     input.classList.add("is-error");
     errorElement.textContent = message;
     errorElement.classList.add("is-visible");
   },
 
+  /**
+   * Remove a marcação de erro de um campo e limpa a mensagem.
+   * @param {HTMLElement} input - Campo a ser limpo
+   * @param {HTMLElement} [errorElement] - Elemento de erro opcional
+   */
   clearFieldError(input, errorElement) {
     input.classList.remove("is-error");
     if (errorElement) {
@@ -239,6 +297,10 @@ const ConfiguracoesController = {
     }
   },
 
+  /**
+   * Desconecta o usuário e redireciona para a tela de login.
+   * Em caso de erro, redireciona mesmo assim.
+   */
   async handleLogout() {
     try {
       await AuthService.logout();

@@ -13,6 +13,12 @@
  */
 const InputMasks = {
 
+  /**
+   * Formata uma string de dígitos como telefone brasileiro.
+   * Aceita 10 dígitos (fixo) ou 11 dígitos (celular).
+   * @param {string} valor - String com dígitos numéricos
+   * @returns {string} Telefone formatado ex: "(11) 98765-4321"
+   */
   formatarTelefone(valor) {
     const digits = valor.replace(/\D/g, "").slice(0, 11);
     if (digits.length <= 2) return digits.length ? `(${digits}` : "";
@@ -20,6 +26,12 @@ const InputMasks = {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
   },
 
+  /**
+   * Formata uma string de dígitos como CPF (11 dígitos) ou CNPJ (14 dígitos).
+   * A detecção é automática baseada na quantidade de dígitos.
+   * @param {string} valor - String com dígitos numéricos
+   * @returns {string} CPF "xxx.xxx.xxx-xx" ou CNPJ "xx.xxx.xxx/xxxx-xx"
+   */
   formatarCpfCnpj(valor) {
     const digits = valor.replace(/\D/g, "").slice(0, 14);
     if (digits.length <= 11) {
@@ -35,6 +47,11 @@ const InputMasks = {
     return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
   },
 
+  /**
+   * Formata uma string de 8 dígitos como CEP brasileiro.
+   * @param {string} valor - String com dígitos numéricos
+   * @returns {string} CEP formatado ex: "12345-678"
+   */
   formatarCep(valor) {
     const digits = valor.replace(/\D/g, "").slice(0, 8);
     if (digits.length <= 5) return digits;
